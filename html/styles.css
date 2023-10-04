@@ -1,0 +1,92 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #222;
+  padding: 5px;
+  color: bisque;
+  overflow-x: hidden;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 5px;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+#chatBox {
+  height: 200px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+#videoConteiner {
+  position: absolute;
+  width: 100%; /* Добавьте ширину контейнера для корректного позиционирования */
+  height: 85%; /* Удалите фиксированную высоту для адаптивности */
+  
+  display: flex; /* Добавьте flex-контейнер для выравнивания по центру */
+  justify-content: center; /* Выравнивание по горизонтали */
+  align-items: center; /* Выравнивание по вертикали */
+  
+}
+
+#localVideoContainer {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  max-width: 10%; 
+  
+  height: auto;
+  border: 2px solid white;
+  border-radius: 5px;
+}
+
+#remoteVideoContainer {
+  height: 100%;
+  border: 3px solid #333;
+  border-radius: 5px;
+
+
+}
+
+#roomName {
+  height: 10%;
+  width: 100%;
+  font-size: large;
+  text-align: center;
+}
+
+video{
+ 
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+}

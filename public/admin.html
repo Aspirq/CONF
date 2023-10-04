@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Администрирование собеседования</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <!-- HTML для модального окна -->
+    <div id="renameModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <input type="text" id="newRoomName" placeholder="Новое имя комнаты" />
+        <button id="modalRenameButton">Переименовать</button>
+      </div>
+    </div>
+
+    <div id="adminOptions">
+      <!-- Ваши административные опции здесь -->
+      <h2>Административные Опции</h2>
+      <div id="rooms"></div>
+
+      <!-- Добавьте здесь любые административные элементы, например, кнопки, формы, и т. д. -->
+    </div>
+    <div id="chatContainer">
+      <div id="chatBottom">
+        <h2>Чат</h2>
+
+        <div id="chatBox"></div>
+        <div id="messageInputContainer">
+          <select id="userDropdown">
+            <!-- Ваши пользователи будут добавлены здесь как опции выпадающего списка -->
+            <option value="user1">Пользователь 1</option>
+            <option value="user2">Пользователь 2</option>
+            <!-- Добавьте других пользователей по мере необходимости -->
+          </select>
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Введите сообщение"
+          />
+          <button id="sendMessage">Отправить</button>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    const socket = io();
+
+    const renameModal = document.getElementById("renameModal");
+    const closeSpan = document.getElementsByClassName("close")[0];
+    const modalRenameButton = document.getElementById("modalRenameButton");
+    const newRoomName = document.getElementById("newRoomName");
+
+    socket.emit("GetRooms");
+
+    socket.on("SetRooms", (rooms) => {
+      const roomsDiv = document.getElementById("rooms");
+      
+
+      // Очищаем содержимое <div id="rooms"></div>
+      roomsDiv.innerHTML = "";
+
+      // Генерируем ссылки на комнаты
+      for (const roomId in rooms) {
+        const room = rooms[roomId];
+
+        // Создание контейнера для комнаты
+        const roomItem = document.createElement("div");
+
+        // Создание ссылки на комнату
+        const roomLink = document.createElement("a");
+        roomLink.href = `/conversation-room/${roomId}`;
+        roomLink.textContent = room.listenerFullName;
+        roomItem.appendChild(roomLink);
+
+        // Создание кнопки Переименовать
+        const renameButton = document.createElement("button");
+        renameButton.textContent = "Переименовать";
+        renameButton.addEventListener("click", () => {
+          // Логика переименования комнаты
+          modalRenameButton.dataset.roomId = roomId;
+
+          newRoomName.value = roomLink.textContent;
+          renameModal.style.display = "block";
+        });
+        roomItem.appendChild(renameButton);
+
+        // Создание кнопки Перезагрузить
+        const reloadButton = document.createElement("button");
+        reloadButton.textContent = "Перезагрузить";
+        reloadButton.addEventListener("click", () => {
+          // Логика перезагрузки комнаты
+        });
+        roomItem.appendChild(reloadButton);
+
+        // Создание кнопки Удалить
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Удалить";
+        deleteButton.addEventListener("click", () => {
+          // Логика удаления комнаты
+        });
+        roomItem.appendChild(deleteButton);
+
+        // Добавление контейнера комнаты в div#rooms
+        roomsDiv.appendChild(roomItem);
+      }
+    });
+
+    // Когда пользователь нажимает на (x), закройте модальное окно
+    closeSpan.onclick = function () {
+      renameModal.style.display = "none";
+    };
+
+    // Когда пользователь нажимает в любом месте за пределами модального окна, закройте его
+    window.onclick = function (event) {
+      if (event.target == renameModal) {
+        renameModal.style.display = "none";
+      }
+    };
+
+    modalRenameButton.addEventListener("click", renameRoom);
+    function renameRoom() {
+      const roomId = this.dataset.roomId; // Получите ID комнаты из атрибута data
+      socket.emit("RenameRoom", roomId, newRoomName.value);
+      document.querySelector(
+        `a[href="/conversation-room/${roomId}"]`
+      ).textContent = newRoomName.value;
+      renameModal.style.display = "none";
+      socket.emit("GetRooms");
+    };
+  </script>
+</html>

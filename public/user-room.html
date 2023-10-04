@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Комната ожидания</title>
+    <link rel="stylesheet" href="/styles_user.css" />
+  </head>
+  <body>
+    <div id="roomName"></div>
+    <div id="contentConteiner">
+      <div id="videoConteiner">
+        <div id="remoteVideoContainer"></div>
+        <div id="localVideoContainer"></div>
+      </div>
+      <div id="chatConteiner">
+        <div id="chatBox"></div>
+        <div id="messageInputContainer">
+          <input type="text" id="messageInput" placeholder="Введите сообщение">
+          <button id="sendMessage">Отправить</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const configuration = {
+        iceServers: [
+          {
+            urls: "turns:conf.ipasp.ru:5349",
+            username: "confuser",
+            credential: "confuser",
+          },
+        ],
+        bundlePolicy: 'max-bundle',  
+      };
+
+      // Подключение к серверу Socket.IO
+      const socket = io();
+
+      let localStream;
+      let peerConnection;
+
+      // Получение контейнеров для видео
+      const localVideoContainer = document.getElementById(
+        "localVideoContainer"
+      );
+      const remoteVideoContainer = document.getElementById(
+        "remoteVideoContainer"
+      );
+      const remoteVideo = document.createElement("video");
+      const roomNme = document.createElement("p");
+      document.getElementById("roomName").appendChild(roomNme);
+
+      // Запрос разрешения на использование видео и аудио
+      navigator.mediaDevices
+        .getUserMedia({ 
+          video: {
+            width:{max:640, ideal:480},
+            facingMode: "user",
+            frameRate:{ideal:6, max:10, min:2},
+          }, 
+          audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 512,
+            }, 
+        })
+        .then((stream) => {
+          // Отображение локального видео
+          localStream = stream;
+          const localVideo = document.createElement("video");
+          localVideo.srcObject = localStream;
+          localVideo.autoplay = true;
+          localVideo.muted = true;
+          localVideo.setAttribute("playsinline", "");
+          localVideoContainer.appendChild(localVideo);
+
+          // Отправка сигнала серверу о наличии локального потока
+          socket.emit("localStreamAvailable");
+        })
+        .catch((error) => {
+          console.error("Ошибка получения доступа к видео и аудио:", error);
+        });
+
+      // Подключение к удаленному потоку при его наличии
+      socket.on("remoteStreamAvailable", () => {
+        // Установка соединения WebRTC
+        peerConnection = new RTCPeerConnection(configuration);
+
+        // Добавление локального потока
+        localStream.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Обработка удаленного потока
+        peerConnection.ontrack = (event) => {
+          //console.log(event);
+
+          remoteVideo.srcObject = event.streams[0];
+          remoteVideo.hidden = false;
+          remoteVideo.setAttribute("playsinline", "");
+          remoteVideo.autoplay = true;
+          remoteVideoContainer.appendChild(remoteVideo);
+        };
+
+        // Обработка кандидатов для установки соединения
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            //console.log(event);
+            socket.emit("iceCandidate", event.candidate);
+          }
+        };
+
+        // Создание и отправка оффера
+        peerConnection
+          .createOffer()
+          .then((offer) => {
+            console.log("1");
+            return peerConnection.setLocalDescription(offer);
+          })
+          .then(() => {
+            socket.emit("offer", peerConnection.localDescription);
+          });
+
+        // Обработка ответа
+
+        socket.on("answer", (answer) => {
+          console.log("answer");
+          const remoteDescription = new RTCSessionDescription(answer);
+          peerConnection.setRemoteDescription(remoteDescription);
+        });
+      });
+
+      // Обработка оффера от удаленного участника
+      socket.on("offer", (offer) => {
+        // Установка соединения WebRTC
+        peerConnection = new RTCPeerConnection(configuration);
+
+        // Добавление локального потока
+        localStream.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Обработка удаленного потока
+        peerConnection.ontrack = (event) => {
+          remoteVideo.srcObject = event.streams[0];
+          remoteVideo.hidden = false;
+          remoteVideo.setAttribute("playsinline", "");
+          remoteVideo.autoplay = true;
+          remoteVideo.ondblclick = {};
+          remoteVideoContainer.appendChild(remoteVideo);
+        };
+
+        // Обработка кандидатов для установки соединения
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("iceCandidate", event.candidate);
+          }
+        };
+
+        //Создание и отправка ответа
+        const remoteDescription = new RTCSessionDescription(offer);
+        peerConnection.setRemoteDescription(remoteDescription);
+        peerConnection
+          .createAnswer()
+          .then((answer) => {
+            console.log("Send");
+            return peerConnection.setLocalDescription(answer);
+          })
+          .then(() => {
+            socket.emit("answer", peerConnection.localDescription);
+          });
+      });
+
+      socket.on("DisconnecUser", () => {
+        remoteVideo.hidden = true;
+        console.log("disc");
+      });
+
+      // Обработка кандидатов для установки соединения
+      socket.on("iceCandidate", (event) => {
+        console.log("ice");
+        const candidate = new RTCIceCandidate(event);
+        peerConnection.addIceCandidate(candidate);
+      });
+
+      socket.emit("GetName");
+
+      socket.on("SetName", (data) => {
+        var node = document.createTextNode(data.listenerFullName);
+        roomNme.appendChild(node);
+      });
+
+      const sendMessageButton = document.getElementById("sendMessage");
+      const messageInput = document.getElementById("messageInput");
+      const chatBox = document.getElementById("chatBox");
+
+      sendMessageButton.addEventListener("click", () => {
+        const message = messageInput.value;
+        if (message) {
+          // Отправка сообщения на сервер или локальная обработка
+
+          // Создание элемента для отображения сообщения
+          const messageElement = document.createElement("div");
+          messageElement.textContent = message;
+          chatBox.appendChild(messageElement);
+
+          // Очистка поля ввода
+          messageInput.value = "";
+
+          // Прокрутка чата вниз, чтобы видеть новые сообщения
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      });
+    </script>
+  </body>
+</html>

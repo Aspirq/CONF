@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Представление пользователя</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Представьтесь, пожалуйста</h1>
+  <form id="userForm" action="/join-waiting-room" method="post">
+    <label for="fullName">ФИО:</label>
+    <input type="text" id="fullName" required>
+    <button type="submit">Отправить</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Подключение к серверу Socket.IO
+    const socket = io();
+
+    // Обработка отправки формы
+    const userForm = document.getElementById('userForm');
+    userForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      // Получение значения ФИО
+      const fullNameInput = document.getElementById('fullName');
+      const fullName = fullNameInput.value.trim();
+
+      // Проверка наличия значения ФИО
+      if (fullName === '') {
+        return;
+      }
+
+      // Отправка представления пользователя на сервер
+      socket.emit('userPresentation', { fullName });
+    });
+
+    // Обработка подтверждения успешного сохранения представления
+    socket.on('presentationSuccess', (data) => {
+      const message = data.message;
+      const roomId = data.RID;
+
+      console.log(message);
+      console.log('ID комнаты ожидания:', roomId);
+
+      // Перенаправление на страницу комнаты ожидания с правильным ID комнаты
+      window.location.href = `/user-room/${roomId}`;
+    });
+  </script>
+</body>
+</html>
