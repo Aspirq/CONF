@@ -7,20 +7,27 @@ const session = require("express-session");
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+const db = require("./admin_db");
 
-
+db.checkUser("ana", "1234")
+  .then((match) => {
+    console.log(match ? "User verified" : "Verification failed");
+  })
+  .catch((error) => {
+    console.error("An error occurred:", error);
+  });
 
 var genuuid = require("uuid");
 const { connected } = require("process");
 
-const { getWaitingRooms } = require('./waitingRoomData.js');
-const { setWaitingRoom } = require('./waitingRoomData.js');
+const { getWaitingRooms } = require("./waitingRoomData.js");
+const { setWaitingRoom } = require("./waitingRoomData.js");
 
 // Массив для хранения комнат ожидания
 //const waitingRooms = {};
 const urlencodedParser = express.urlencoded({ extended: false });
 
-const routeHandlers = require('./routeHandlers');
+const routeHandlers = require("./routeHandlers");
 
 // Разрешить обслуживание статических файлов из папки 'public'
 app.use(express.static(path.join(__dirname, "html")));
@@ -35,14 +42,10 @@ sessMidl = session({
 app.use(sessMidl);
 io.engine.use(sessMidl);
 
-
 app.get("/", routeHandlers.homeRouteHandler);
 app.get("/conversation-room/:roomId", routeHandlers.conversationRoomHandler);
 app.get("/user-room/:roomId", routeHandlers.userRoomHandler);
 app.get("/admin", routeHandlers.adminPageHandler);
-
-
-
 
 // Обработка представления пользователя
 io.on("connection", (socket) => {
@@ -59,7 +62,6 @@ io.on("connection", (socket) => {
     socket.emit("SetName", waitingRooms[roomID]);
   });
 
-
   socket.on("RenameRoom", (roomId, newRoomName) => {
     const waitingRooms = getWaitingRooms();
     waitingRooms[roomId].listenerFullName = newRoomName;
@@ -67,8 +69,17 @@ io.on("connection", (socket) => {
     //socket.emit("SetName", waitingRooms[roomID]);
   });
 
-
-
+  socket.on("adminLogin", (username, password) => {
+    db.checkUser(username, password)
+      .then((match) => {
+        socket.request.session.isAdmin = match;
+        socket.request.session.save();
+        socket.emit("adminLogin_answer", match);
+      })
+      .catch((error) => {
+        console.error("An error occurred:", error);
+      });
+  });
 
   // Обработка представления пользователя
   socket.on("userPresentation", (data) => {
@@ -146,6 +157,6 @@ function createWaitingRoom(fullName) {
     SecondCaller: null,
     boss: false,
   };
-  setWaitingRoom(roomId, New_waitingRoom)
+  setWaitingRoom(roomId, New_waitingRoom);
   return roomId;
 }

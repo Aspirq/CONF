@@ -1,13 +1,12 @@
 const path = require("path");
-const { getWaitingRooms } = require('./waitingRoomData.js');
-
+const { getWaitingRooms } = require("./waitingRoomData.js");
 
 //Обработчик домашней дерриктории
 exports.homeRouteHandler = (req, res) => {
   if (req.session.roomId != undefined) {
     res.redirect("/user-room/" + req.session.roomId);
   } else {
-    res.sendFile(path.join(__dirname, "public", "user-presentation.html"));
+    res.sendFile(path.join(__dirname, "html_temlate", "user-presentation.html"));
   }
 };
 
@@ -22,7 +21,7 @@ exports.userRoomHandler = (req, res) => {
   } else {
     //req.session.roomId = roomId;
     // Отправка страницы комнаты ожидания
-    res.sendFile(path.join(__dirname, "public", "user-room.html"));
+    res.sendFile(path.join(__dirname, "html_temlate", "user-room.html"));
   }
 };
 
@@ -37,10 +36,15 @@ exports.conversationRoomHandler = (req, res) => {
   } else {
     //req.session.roomId = roomId;
     // Отправка страницы комнаты ожидания
-    res.sendFile(path.join(__dirname, "public", "waiting-room.html"));
+    res.sendFile(path.join(__dirname, "html_temlate", "waiting-room.html"));
   }
 };
 
 exports.adminPageHandler = (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "admin.html"));
+  const isAdmin = req.session.isAdmin;
+  if (isAdmin == true) {
+    res.sendFile(path.join(__dirname, "html_temlate", "admin.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "html_temlate", "login.html"));
+  }
 };
