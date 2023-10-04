@@ -7,6 +7,10 @@ body {
   overflow-x: hidden;
 }
 
+a {
+  color: bisque;
+}
+
 #contentConteiner {
   display: flex;
   align-items: flex-start;
@@ -25,7 +29,7 @@ body {
   left: 0;
 }
 
-#chatConteiner {
+#chatConteiner__ {
   width: 28%;
   height: 85%;
   background-color: #fff;
@@ -64,14 +68,13 @@ video {
 }
 
 #messageInputContainer {
-  display: flex;
-  flex-direction: column;
+  display: flex;  
   width: 100%;
-  margin-top: 0px;
+  margin-top: 10px;
 }
 
 #messageInput {
-  width: 68%;
+  width: 65%;
   padding: 10px;
   font-size: 16px;
   margin-bottom: 5px;
@@ -100,7 +103,7 @@ video {
 #chatContainer {
   display: flex;
   flex-direction: column;
-  height: 30vh;
+  height: 45vh;
 }
 
 #chatBottom {
@@ -117,7 +120,7 @@ video {
 }
 
 #userDropdown {
-  width: 20%; /* Ширина выпадающего списка */
+  width: 35%; /* Ширина выпадающего списка */
   padding: 10px;
   font-size: 16px;
   margin-bottom: 5px;

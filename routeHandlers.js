@@ -19,7 +19,7 @@ exports.userRoomHandler = (req, res) => {
     console.log("Комната не найдена");
     res.redirect("/");
   } else {
-    //req.session.roomId = roomId;
+    req.session.roomId = roomId;
     // Отправка страницы комнаты ожидания
     res.sendFile(path.join(__dirname, "html_temlate", "user-room.html"));
   }
@@ -34,7 +34,7 @@ exports.conversationRoomHandler = (req, res) => {
     console.log("Комната не найдена");
     res.redirect("/");
   } else {
-    //req.session.roomId = roomId;
+    req.session.roomId = roomId;
     // Отправка страницы комнаты ожидания
     res.sendFile(path.join(__dirname, "html_temlate", "waiting-room.html"));
   }

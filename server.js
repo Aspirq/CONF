@@ -29,7 +29,7 @@ const urlencodedParser = express.urlencoded({ extended: false });
 
 const routeHandlers = require("./routeHandlers");
 
-// Разрешить обслуживание статических файлов из папки 'public'
+// Разрешить обслуживание статических файлов из папки 'html'
 app.use(express.static(path.join(__dirname, "html")));
 
 sessMidl = session({
@@ -100,6 +100,8 @@ io.on("connection", (socket) => {
     console.log(socket.rooms[1]);
     socket.to(socket.rooms).emit("DisconnecUser");
   });
+
+  io.of("/").adapter.setMaxListeners(20);
 
   io.of("/").adapter.on("leave-room", (room, id) => {
     //console.log(`socket ${id} has leave room ${room}`);
