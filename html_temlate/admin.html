@@ -4,133 +4,195 @@
     <meta charset="UTF-8" />
     <title>Администрирование собеседования</title>
     <link rel="stylesheet" href="/admin.css" />
+    <!-- Ссылка на внешний CSS файл -->
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Ссылка на библиотеку Socket.io -->
   </head>
   <body>
-    <!-- HTML для модального окна -->
+    <!-- Модальное окно для переименования комнаты -->
     <div id="renameModal" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
+        <!-- Кнопка закрытия модального окна -->
         <input type="text" id="newRoomName" placeholder="Новое имя комнаты" />
+        <!-- Поле ввода для нового имени комнаты -->
         <button id="modalRenameButton">Переименовать</button>
+        <!-- Кнопка для отправки нового имени комнаты -->
       </div>
     </div>
 
     <div id="adminOptions">
-      <!-- Ваши административные опции здесь -->
-      <h2>Административные Опции</h2>
+      <!-- Секция административных опций -->
+      <h2>Административные опции</h2>
       <div id="rooms"></div>
-
-      <!-- Добавьте здесь любые административные элементы, например, кнопки, формы, и т. д. -->
+      <!-- Контейнер для списка комнат -->
     </div>
     <div id="chatContainer">
       <div id="chatBottom">
         <h2>Чат</h2>
-
         <div id="chatBox"></div>
+        <!-- Контейнер для сообщений чата -->
         <div id="messageInputContainer">
           <select id="userDropdown">
-            <!-- Ваши пользователи будут добавлены здесь как опции выпадающего списка -->
-            <option value="user1">Пользователь 1</option>
-            <option value="user2">Пользователь 2</option>
-            <!-- Добавьте других пользователей по мере необходимости -->
+            <!-- Выпадающий список для выбора пользователя -->
+           
           </select>
           <input
             type="text"
             id="messageInput"
             placeholder="Введите сообщение"
           />
-          
+          <!-- Поле ввода для сообщения -->
         </div>
         <button id="sendMessage">Отправить</button>
+        <!-- Кнопка отправки сообщения -->
       </div>
     </div>
   </body>
 
   <script>
-    const socket = io();
+    const socket = io(); // Инициализация соединения с сервером через Socket.io
 
+    // Элементы DOM для работы с модальным окном
     const renameModal = document.getElementById("renameModal");
     const closeSpan = document.getElementsByClassName("close")[0];
     const modalRenameButton = document.getElementById("modalRenameButton");
     const newRoomName = document.getElementById("newRoomName");
 
-    socket.emit("GetRooms");
+    socket.emit("GetRooms"); // Запрос списка комнат с сервера
 
+    // Функция для создания кнопки "Переименовать"
+    function createRenameButton(roomId, roomNme) {
+      const renameButton = document.createElement("button");
+      renameButton.textContent = "Переименовать";
+      renameButton.addEventListener("click", () => {
+        // Логика переименования комнаты
+        modalRenameButton.dataset.roomId = roomId;
+
+        newRoomName.value = roomNme;
+        renameModal.style.display = "block";
+      });
+      return renameButton;
+    }
+
+    // Функция для создания кнопки "Перезагрузить"
+    function createReloadButton(roomId) {
+      const reloadButton = document.createElement("button");
+      reloadButton.textContent = "Перезагрузить";
+      reloadButton.addEventListener("click", () => {
+        // Логика перезагрузки комнаты
+      });
+      return reloadButton;
+    }
+
+    // Функция для создания кнопки "Удалить"
+    function createDeleteButton(roomId) {
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Удалить";
+      deleteButton.addEventListener("click", () => {
+        // Логика удаления комнаты
+      });
+      return deleteButton;
+    }
+
+    // Функция для создания кнопки "Gthtqnb"
+    function createGoToButton(roomId) {
+      const GoToButton = document.createElement("button");
+      GoToButton.textContent = "Подключиться к комнате";
+      GoToButton.addEventListener("click", () => {
+        // Логика удаления комнаты
+      });
+      return GoToButton;
+    }
+
+    // Функция для создания элемента комнаты
+    function createRoomItem(roomId, room) {
+      // Создание контейнера для комнаты
+      const roomItem = document.createElement("div");
+      roomItem.className = "room-item"; // Добавляем класс для стилизации
+
+      // Создание ссылки на комнату
+      const roomName = document.createElement("div");
+      roomName.className = "room-name";
+      roomName.textContent = room.listenerFullName;
+      roomItem.appendChild(roomName);
+
+      // Создание контейнера для кнопок
+      const buttonGroup = document.createElement("div");
+      buttonGroup.className = "button-group";
+
+      // Добавление кнопок в контейнер кнопок
+      buttonGroup.appendChild(createGoToButton(roomId));
+      buttonGroup.appendChild(
+        createRenameButton(roomId, room.listenerFullName)
+      );
+      buttonGroup.appendChild(createReloadButton(roomId));
+      buttonGroup.appendChild(createDeleteButton(roomId));
+
+      // Добавление контейнера кнопок в контейнер комнаты
+      roomItem.appendChild(buttonGroup);
+
+      return roomItem;
+    }
+
+    // Функция для создания элемента опции
+    function createUserOption(roomId, room, chckUserDrop) {
+      const userOption = document.createElement("option");
+      userOption.value = roomId; // Используем roomId как значение опции
+      if (roomId == "all") {
+        roomNme = "Всем";
+      } else {
+        roomNme = room.listenerFullName;
+      };
+      userOption.textContent = roomNme; // Используем имя пользователя как текст опции
+      
+      if (chckUserDrop == roomId) {
+        userOption.selected = true;
+      }
+      return userOption;
+    }
+
+    // Обработчик события получения списка комнат с сервера
     socket.on("SetRooms", (rooms) => {
       const roomsDiv = document.getElementById("rooms");
+      const userDropdown = document.getElementById("userDropdown"); // Получаем элемент выпадающего списка
+      const chckUserDrop = userDropdown.value;
+
+      roomsDiv.innerHTML = ""; // Очищаем содержимое контейнера комнат
+      userDropdown.innerHTML = ""; // Очистите текущий список пользователей
+      userDropdown.appendChild(createUserOption("all", "Всем", chckUserDrop)); // Добавьте опцию "Всем" в выпадающий список
       
 
-      // Очищаем содержимое <div id="rooms"></div>
-      roomsDiv.innerHTML = "";
-
-      // Генерируем ссылки на комнаты
       for (const roomId in rooms) {
         const room = rooms[roomId];
 
-        // Создание контейнера для комнаты
-        const roomItem = document.createElement("div");
+        // Заполнение списка пользователей
+        const userOption = createUserOption(roomId, room, chckUserDrop);
+        userDropdown.appendChild(userOption); // Добавьте опцию в выпадающий список
 
-        // Создание ссылки на комнату
-        const roomLink = document.createElement("a");
-        roomLink.href = `/conversation-room/${roomId}`;
-        roomLink.textContent = room.listenerFullName;
-        roomItem.appendChild(roomLink);
-
-        // Создание кнопки Переименовать
-        const renameButton = document.createElement("button");
-        renameButton.textContent = "Переименовать";
-        renameButton.addEventListener("click", () => {
-          // Логика переименования комнаты
-          modalRenameButton.dataset.roomId = roomId;
-
-          newRoomName.value = roomLink.textContent;
-          renameModal.style.display = "block";
-        });
-        roomItem.appendChild(renameButton);
-
-        // Создание кнопки Перезагрузить
-        const reloadButton = document.createElement("button");
-        reloadButton.textContent = "Перезагрузить";
-        reloadButton.addEventListener("click", () => {
-          // Логика перезагрузки комнаты
-        });
-        roomItem.appendChild(reloadButton);
-
-        // Создание кнопки Удалить
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Удалить";
-        deleteButton.addEventListener("click", () => {
-          // Логика удаления комнаты
-        });
-        roomItem.appendChild(deleteButton);
-
-        // Добавление контейнера комнаты в div#rooms
+        // Создание элемента комнаты и добавление его в контейнер комнат
+        const roomItem = createRoomItem(roomId, room);
         roomsDiv.appendChild(roomItem);
       }
     });
 
-    // Когда пользователь нажимает на (x), закройте модальное окно
+    // Обработчики событий для закрытия модального окна и переименования комнаты
     closeSpan.onclick = function () {
-      renameModal.style.display = "none";
+      renameModal.style.display = "none"; // Закрыть модальное окно при клике на (x)
     };
 
-    // Когда пользователь нажимает в любом месте за пределами модального окна, закройте его
     window.onclick = function (event) {
       if (event.target == renameModal) {
-        renameModal.style.display = "none";
+        renameModal.style.display = "none"; // Закрыть модальное окно при клике вне его области
       }
     };
 
     modalRenameButton.addEventListener("click", renameRoom);
     function renameRoom() {
-      const roomId = this.dataset.roomId; // Получите ID комнаты из атрибута data
-      socket.emit("RenameRoom", roomId, newRoomName.value);
-      document.querySelector(
-        `a[href="/conversation-room/${roomId}"]`
-      ).textContent = newRoomName.value;
-      renameModal.style.display = "none";
-      socket.emit("GetRooms");
-    };
+      const roomId = this.dataset.roomId; // Получение ID комнаты из атрибута data
+      socket.emit("RenameRoom", roomId, newRoomName.value); // Отправка запроса на переименование комнаты
+      renameModal.style.display = "none"; // Закрыть модальное окно
+      socket.emit("GetRooms"); // Запрос обновленного списка комнат с сервера
+    }
   </script>
 </html>
