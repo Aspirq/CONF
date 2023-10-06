@@ -34,6 +34,8 @@
       let localStream;
       let peerConnection;
 
+      socket.emit("isAdmin");
+
       // Получение контейнеров для видео
       const localVideoContainer = document.getElementById(
         "localVideoContainer"
@@ -84,6 +86,11 @@
         // Добавление локального потока
         localStream.getTracks().forEach((track) => {
           peerConnection.addTrack(track, localStream);
+        });
+
+        socket.on("adminGotoRoom", (roomId) => {
+          window.location.href = `/conversation-room/${roomId}`;   
+ 
         });
 
         // Обработка удаленного потока

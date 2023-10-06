@@ -147,7 +147,8 @@ video {
 }
 
 #userDropdown {
-  width: 150px; /* Ширина выпадающего списка */
+  width: 15%; /* Ширина выпадающего списка */
+  max-width: 200px;
   padding: 10px;
   font-size: 16px;
   margin-bottom: 5px;
@@ -175,6 +176,11 @@ video {
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
+  display: flex;
+}
+
+#newRoomName {
+  flex: 1;
 }
 
 .close {

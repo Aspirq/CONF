@@ -22,6 +22,7 @@ const { connected } = require("process");
 
 const { getWaitingRooms } = require("./waitingRoomData.js");
 const { setWaitingRoom } = require("./waitingRoomData.js");
+const { removeWaitingRoom } = require("./waitingRoomData.js");
 
 // Массив для хранения комнат ожидания
 //const waitingRooms = {};
@@ -53,6 +54,28 @@ io.on("connection", (socket) => {
     const waitingRooms = getWaitingRooms();
     console.log("GetRooms");
     socket.emit("SetRooms", waitingRooms);
+  });
+
+  socket.on("adminGotoRoom", (roomId) => {
+    if (socket.request.session.isAdmin)
+      socket.to("admins").emit("adminGotoRoom", roomId);
+  });
+
+  socket.on("sendRoomReload", (roomId) => {
+    if (socket.request.session.isAdmin) {
+      const waitingRooms = getWaitingRooms();
+      waitingRooms[roomId].isConnected = false;
+      setWaitingRoom(roomId, waitingRooms[roomId]);
+      socket.to(roomId).emit("callRoomReload");
+    };
+  });
+
+  socket.on("sendRoomDelete", (roomId) => {
+    if (socket.request.session.isAdmin) {
+      if (removeWaitingRoom(roomId))
+        socket.to(roomId).emit("callRoomReload", roomId);
+      socket.emit("SetRooms", getWaitingRooms());
+    }
   });
 
   socket.on("GetName", () => {
@@ -102,15 +125,18 @@ io.on("connection", (socket) => {
     socket.to(socket.rooms).emit("DisconnecUser");
     const waitingRooms = getWaitingRooms();
     const roomID = socket.request.session.roomId;
-    if (waitingRooms[roomID]) {
-      waitingRooms[roomID].isConnected = false;
+    const room_set = io.of("/").adapter.rooms.get(roomID);
+    if (waitingRooms[roomID] && room_set) {
+      //if (room_set.size <= 1)
+      if (!socket.request.session.isAdmin)
+        waitingRooms[roomID].isConnected = false;
       setWaitingRoom(roomID, waitingRooms[roomID]);
       socket.to("admins").emit("SetRooms", waitingRooms);
       console.log(getWaitingRooms());
     }
   });
 
-  io.of("/").adapter.setMaxListeners(20);
+  io.of("/").adapter.setMaxListeners(200);
 
   io.of("/").adapter.on("leave-room", (room, id) => {
     //console.log(`socket ${id} has leave room ${room}`);

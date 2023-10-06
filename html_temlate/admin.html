@@ -12,12 +12,13 @@
     <!-- Модальное окно для переименования комнаты -->
     <div id="renameModal" class="modal">
       <div class="modal-content">
-        <span class="close">&times;</span>
-        <!-- Кнопка закрытия модального окна -->
         <input type="text" id="newRoomName" placeholder="Новое имя комнаты" />
         <!-- Поле ввода для нового имени комнаты -->
         <button id="modalRenameButton">Переименовать</button>
         <!-- Кнопка для отправки нового имени комнаты -->
+
+        <span class="close">&times;</span>
+        <!-- Кнопка закрытия модального окна -->
       </div>
     </div>
 
@@ -26,7 +27,9 @@
       <div class="adminHeader">
         <h2>Административные опции</h2>
         <div class="button-group">
-          <button id="videoPageButton">Открыть окно пустое окно для видео</button>
+          <button id="videoPageButton">
+            Открыть пустое окно для видео
+          </button>
           <button id="videoExitButton">Выйти из всех комнат</button>
         </div>
       </div>
@@ -63,6 +66,16 @@
     const closeSpan = document.getElementsByClassName("close")[0];
     const modalRenameButton = document.getElementById("modalRenameButton");
     const newRoomName = document.getElementById("newRoomName");
+    const videoExitButton = document.getElementById("videoExitButton");
+
+    // Добавляем обработчик событий нажатия кнопок для newRoomName
+    newRoomName.addEventListener("keyup", function (event) {
+      //Проверяем нажатие Enter
+      if (event.key === "Enter") {
+        // Если клавиша Enter была нажата, нажимаем кнопку "Переименовать"
+        modalRenameButton.click();
+      }
+    });
 
     socket.emit("GetRooms"); // Запрос списка комнат с сервера
     socket.emit("isAdmin");
@@ -86,27 +99,38 @@
       const reloadButton = document.createElement("button");
       reloadButton.textContent = "Перезагрузить";
       reloadButton.addEventListener("click", () => {
-        // Логика перезагрузки комнаты
+        socket.emit("sendRoomReload", roomId);
       });
       return reloadButton;
     }
+
+    socket.on("disconnect", () => {
+        console.warn(
+          "Соединение с сервером потеряно. Страница будет обновлена."
+        );        
+        
+        setTimeout(() => {
+          location.reload();
+        }, 1000); // задержка в 1 секунду перед обновлением страницы
+      });
 
     // Функция для создания кнопки "Удалить"
     function createDeleteButton(roomId) {
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "Удалить";
       deleteButton.addEventListener("click", () => {
-        // Логика удаления комнаты
+        socket.emit("sendRoomDelete", roomId);
       });
       return deleteButton;
     }
 
-    // Функция для создания кнопки "Gthtqnb"
+    // Функция для создания кнопки "Подключиться"
     function createGoToButton(roomId) {
       const GoToButton = document.createElement("button");
       GoToButton.textContent = "Подключиться к комнате";
       GoToButton.addEventListener("click", () => {
         // Логика удаления комнаты
+        socket.emit("adminGotoRoom", roomId);
       });
       return GoToButton;
     }
@@ -207,10 +231,16 @@
       socket.emit("GetRooms"); // Запрос обновленного списка комнат с сервера
     }
 
+    //Обработка события кнопки создания страници видео для админа
     document
       .getElementById("videoPageButton")
       .addEventListener("click", function () {
-        window.open("/conversation-room/:admin", "_blank"); // Укажите URL вашей страницы с видео
+        window.open("/conversation-room/:admin", "_blank");
       });
+    
+    //обработка события нажатия на конопку выхода из видео
+    videoExitButton.addEventListener("click", function () {
+      socket.emit("adminGotoRoom", "blanc");
+    });
   </script>
 </html>

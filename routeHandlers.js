@@ -3,7 +3,8 @@ const { getWaitingRooms } = require("./waitingRoomData.js");
 
 //Обработчик домашней дерриктории
 exports.homeRouteHandler = (req, res) => {
-  if (req.session.roomId != undefined) {
+  const waitingRooms = getWaitingRooms();
+  if (waitingRooms[req.session.roomId]) {
     res.redirect("/user-room/" + req.session.roomId);
   } else {
     res.sendFile(

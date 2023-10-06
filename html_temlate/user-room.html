@@ -15,7 +15,11 @@
       <div id="chatConteiner">
         <div id="chatBox"></div>
         <div id="messageInputContainer">
-          <input type="text" id="messageInput" placeholder="Введите сообщение">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Введите сообщение"
+          />
           <button id="sendMessage">Отправить</button>
         </div>
       </div>
@@ -31,7 +35,7 @@
             credential: "confuser",
           },
         ],
-        bundlePolicy: 'max-bundle',  
+        bundlePolicy: "max-bundle",
       };
 
       // Подключение к серверу Socket.IO
@@ -53,17 +57,17 @@
 
       // Запрос разрешения на использование видео и аудио
       navigator.mediaDevices
-        .getUserMedia({ 
+        .getUserMedia({
           video: {
-            width:{max:640, ideal:480},
+            width: { max: 640, ideal: 480 },
             facingMode: "user",
-            frameRate:{ideal:6, max:10, min:2},
-          }, 
+            frameRate: { ideal: 6, max: 10, min: 2 },
+          },
           audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                sampleRate: 512,
-            }, 
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 512,
+          },
         })
         .then((stream) => {
           // Отображение локального видео
@@ -189,6 +193,20 @@
       socket.on("SetName", (data) => {
         var node = document.createTextNode(data.listenerFullName);
         roomNme.appendChild(node);
+      });
+
+      socket.on("callRoomReload", () => {
+        window.location.href = `/`;
+      });
+
+      socket.on("disconnect", () => {
+        console.warn(
+          "Соединение с сервером потеряно. Страница будет обновлена."
+        );        
+        
+        setTimeout(() => {
+          location.reload();
+        }, 1000); // задержка в 1 секунду перед обновлением страницы
       });
 
       const sendMessageButton = document.getElementById("sendMessage");
