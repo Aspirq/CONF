@@ -23,7 +23,13 @@
 
     <div id="adminOptions">
       <!-- Секция административных опций -->
-      <h2>Административные опции</h2>
+      <div class="adminHeader">
+        <h2>Административные опции</h2>
+        <div class="button-group">
+          <button id="videoPageButton">Открыть окно пустое окно для видео</button>
+          <button id="videoExitButton">Выйти из всех комнат</button>
+        </div>
+      </div>
       <div id="rooms"></div>
       <!-- Контейнер для списка комнат -->
     </div>
@@ -35,7 +41,6 @@
         <div id="messageInputContainer">
           <select id="userDropdown">
             <!-- Выпадающий список для выбора пользователя -->
-           
           </select>
           <input
             type="text"
@@ -60,6 +65,7 @@
     const newRoomName = document.getElementById("newRoomName");
 
     socket.emit("GetRooms"); // Запрос списка комнат с сервера
+    socket.emit("isAdmin");
 
     // Функция для создания кнопки "Переименовать"
     function createRenameButton(roomId, roomNme) {
@@ -117,6 +123,13 @@
       roomName.textContent = room.listenerFullName;
       roomItem.appendChild(roomName);
 
+      // Проверяем значение room.isConnected и меняем цвет фона
+      if (room.isConnected) {
+        roomItem.style.backgroundColor = "#00FF000F";
+      } else {
+        roomItem.style.backgroundColor = "#FF00000F";
+      }
+
       // Создание контейнера для кнопок
       const buttonGroup = document.createElement("div");
       buttonGroup.className = "button-group";
@@ -143,9 +156,9 @@
         roomNme = "Всем";
       } else {
         roomNme = room.listenerFullName;
-      };
+      }
       userOption.textContent = roomNme; // Используем имя пользователя как текст опции
-      
+
       if (chckUserDrop == roomId) {
         userOption.selected = true;
       }
@@ -161,7 +174,6 @@
       roomsDiv.innerHTML = ""; // Очищаем содержимое контейнера комнат
       userDropdown.innerHTML = ""; // Очистите текущий список пользователей
       userDropdown.appendChild(createUserOption("all", "Всем", chckUserDrop)); // Добавьте опцию "Всем" в выпадающий список
-      
 
       for (const roomId in rooms) {
         const room = rooms[roomId];
@@ -194,5 +206,11 @@
       renameModal.style.display = "none"; // Закрыть модальное окно
       socket.emit("GetRooms"); // Запрос обновленного списка комнат с сервера
     }
+
+    document
+      .getElementById("videoPageButton")
+      .addEventListener("click", function () {
+        window.open("/conversation-room/:admin", "_blank"); // Укажите URL вашей страницы с видео
+      });
   </script>
 </html>

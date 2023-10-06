@@ -19,6 +19,15 @@ a {
   border-radius: 10px;
 }
 
+.adminHeader {
+  display: flex;
+  align-items: center;
+}
+
+.adminHeader h2{
+  flex: 1;
+}
+
 .room-name {
   flex: 1; /* Это позволит элементу растягиваться и занимать все доступное пространство */
   margin-right: 10px; /* Добавляем немного отступа справа */
@@ -28,7 +37,6 @@ a {
   display: flex;
   gap: 10px;
 }
-
 
 #contentConteiner {
   display: flex;
@@ -87,13 +95,13 @@ video {
 }
 
 #messageInputContainer {
-  display: flex;  
+  display: flex;
   width: 100%;
   margin-top: 10px;
 }
 
 #messageInput {
-  width: 65%;
+  flex: 1;
   padding: 10px;
   font-size: 16px;
   margin-bottom: 5px;
@@ -139,13 +147,12 @@ video {
 }
 
 #userDropdown {
-  width: 35%; /* Ширина выпадающего списка */
+  width: 150px; /* Ширина выпадающего списка */
   padding: 10px;
   font-size: 16px;
   margin-bottom: 5px;
   box-sizing: border-box;
 }
-
 
 /* CSS для модального окна */
 .modal {
@@ -157,8 +164,8 @@ video {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgb(0,0,0);
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgb(0, 0, 0);
+  background-color: rgba(0, 0, 0, 0.4);
   padding-top: 60px;
 }
 
@@ -181,5 +188,10 @@ video {
 .close:focus {
   color: black;
   text-decoration: none;
+  cursor: pointer;
+}
+
+#videoPageButton {
+  
   cursor: pointer;
 }

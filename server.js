@@ -88,6 +88,7 @@ io.on("connection", (socket) => {
     const roomId = createWaitingRoom(fullName);
     socket.request.session.roomId = roomId;
     socket.request.session.save();
+
     // Отправка подтверждения клиенту
     socket.emit("presentationSuccess", {
       message: "Комната создана",
@@ -97,8 +98,16 @@ io.on("connection", (socket) => {
 
   socket.on("disconnecting", () => {
     console.log(socket.connected); // false
-    console.log(socket.rooms[1]);
+    console.log(socket.rooms);
     socket.to(socket.rooms).emit("DisconnecUser");
+    const waitingRooms = getWaitingRooms();
+    const roomID = socket.request.session.roomId;
+    if (waitingRooms[roomID]) {
+      waitingRooms[roomID].isConnected = false;
+      setWaitingRoom(roomID, waitingRooms[roomID]);
+      socket.to("admins").emit("SetRooms", waitingRooms);
+      console.log(getWaitingRooms());
+    }
   });
 
   io.of("/").adapter.setMaxListeners(20);
@@ -108,10 +117,21 @@ io.on("connection", (socket) => {
     socket.to(room).emit("DisconnecUser");
   });
 
+  socket.on("isAdmin", () => {
+    socket.join("admins");
+  });
+
   // Обработка доступности локального потока
   socket.on("localStreamAvailable", () => {
     const roomID = socket.request.session.roomId;
     socket.join(roomID);
+    const waitingRooms = getWaitingRooms();
+    if (waitingRooms[roomID]) {
+      waitingRooms[roomID].isConnected = true;
+      setWaitingRoom(roomID, waitingRooms[roomID]);
+      socket.to("admins").emit("SetRooms", waitingRooms);
+      console.log(getWaitingRooms());
+    }
     // Отправка сигнала о наличии локального потока
     socket.emit("remoteStreamAvailable");
   });
@@ -146,7 +166,8 @@ server.listen(port, () => {
 
 // Генерация уникального идентификатора комнаты
 function generateRoomId() {
-  return Math.random().toString(36).substring(2, 8);
+  // return Math.random().toString(36).substring(2, 8);
+  return genuuid.v4();
 }
 
 // Создание комнаты ожидания для пользователя
@@ -158,6 +179,7 @@ function createWaitingRoom(fullName) {
     socketIds: null,
     SecondCaller: null,
     boss: false,
+    isConnected: false,
   };
   setWaitingRoom(roomId, New_waitingRoom);
   return roomId;
