@@ -9,7 +9,11 @@
     <div id="roomName"></div>
     <div id="contentConteiner">
       <div id="videoConteiner">
-        <div id="remoteVideoContainer"></div>
+        <div id="remoteVideoContainer">
+          
+            <img id="imgVideo" src="/v13_0021_resize.jpg" />
+          
+        </div>
         <div id="localVideoContainer"></div>
       </div>
       <div id="chatConteiner">
@@ -48,6 +52,8 @@
       const localVideoContainer = document.getElementById(
         "localVideoContainer"
       );
+
+      const imgVideo = document.getElementById("imgVideo");
       const remoteVideoContainer = document.getElementById(
         "remoteVideoContainer"
       );
@@ -102,6 +108,7 @@
 
           remoteVideo.srcObject = event.streams[0];
           remoteVideo.hidden = false;
+          imgVideo.hidden =true;
           remoteVideo.setAttribute("playsinline", "");
           remoteVideo.autoplay = true;
           remoteVideoContainer.appendChild(remoteVideo);
@@ -149,6 +156,7 @@
         peerConnection.ontrack = (event) => {
           remoteVideo.srcObject = event.streams[0];
           remoteVideo.hidden = false;
+          imgVideo.hidden = true;
           remoteVideo.setAttribute("playsinline", "");
           remoteVideo.autoplay = true;
           remoteVideo.ondblclick = {};
@@ -178,6 +186,7 @@
 
       socket.on("DisconnecUser", () => {
         remoteVideo.hidden = true;
+        imgVideo.hidden = false;
         console.log("disc");
       });
 
@@ -202,8 +211,8 @@
       socket.on("disconnect", () => {
         console.warn(
           "Соединение с сервером потеряно. Страница будет обновлена."
-        );        
-        
+        );
+
         setTimeout(() => {
           location.reload();
         }, 1000); // задержка в 1 секунду перед обновлением страницы
