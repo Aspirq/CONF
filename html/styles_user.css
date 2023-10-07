@@ -40,23 +40,25 @@ button:hover {
 }
 
 #chatBox {
-  height: 80%;
+  flex:1;
   overflow-y: scroll;
   border: 1px solid #ccc;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 #contentConteiner {
   display: flex; /* Используем flex-контейнер для размещения чата и видео */
   align-items: flex-start; /* Выравнивание по верхнему краю */
-  height: 90%;
-  width: 100%;
-  position: absolute;
+  flex:1;
+  width: 100%;  
 }
 
 #videoConteiner {
   width: 68%; /* Используем 68% для видео-контейнера */
-  height: 85%;
+  height: 99%;
   display: flex;
  
   justify-content: center;
@@ -65,11 +67,23 @@ button:hover {
   left: 0; /* Размещаем видео слева */
 }
 
+#allContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
 #chatConteiner {
-  width: 28%;
-  height: 85%;
-  background-color: #FFd;
-  color: #222;
+  flex:1;
+  display: flex;
+  flex-direction: column;
+  height: 99%;
+  background-color: #ddd;
+  color: #112;
   vertical-align: bottom;
   position: relative; /* Позиционируем чат относительно контейнера "contentConteiner" */
   right: 0; /* Размещаем чат справа */
@@ -77,22 +91,24 @@ button:hover {
 
 #localVideoContainer {
   position: absolute;
-  bottom: 50px;
-  right: 50px;
-  max-width: 10%;
+  bottom: 20px;
+  right: 20px;
+  width: 20%;
+  max-width: 200px;
   height: auto;
-  border: 2px solid white;
+  border: 5px solid white;
   border-radius: 5px;
 }
 
 #remoteVideoContainer {
   height: 100%;
-  border: 3px solid #333;
-  border-radius: 5px;
+  
+  align-items: center;
+  display: flex;
 }
 
 #roomName {
-  height: 10%;
+  
   width: 100%;
   font-size: large;
   text-align: center;
@@ -106,7 +122,7 @@ video {
 
 #imgVideo {
   width: 100%;
-  
+  max-height: 100%;
   padding: 0px;
 }
 
@@ -120,10 +136,11 @@ video {
 
 #messageInput {
   
-  padding: 10px;
+  padding: 5px;
   font-size: 16px;
   width: 100%;
   box-sizing: border-box;
+  margin: 1px;
 }
 
 #sendMessage {

@@ -48,37 +48,55 @@ button:hover {
 }
 
 #videoConteiner {
-  position: absolute;
+  
   width: 100%; /* Добавьте ширину контейнера для корректного позиционирования */
-  height: 85%; /* Удалите фиксированную высоту для адаптивности */
+  height: 99%; /* Удалите фиксированную высоту для адаптивности */
   
   display: flex; /* Добавьте flex-контейнер для выравнивания по центру */
   justify-content: center; /* Выравнивание по горизонтали */
   align-items: center; /* Выравнивание по вертикали */
+  position: relative; /* Позиционируем видео относительно контейнера "contentConteiner" */
   
+}
+
+#allContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+#imgVideo {
+  width: 100%;
+  max-height: 100%;
+  padding: 0px;
 }
 
 #localVideoContainer {
   position: absolute;
   bottom: 50px;
   right: 50px;
-  max-width: 10%; 
-  
+  max-width: 250px; 
+  width: 25%;
   height: auto;
   border: 2px solid white;
   border-radius: 5px;
 }
 
 #remoteVideoContainer {
-  height: 100%;
-  border: 3px solid #333;
-  border-radius: 5px;
+  
+  height: 99%;
+  align-items: center;
+ 
 
 
 }
 
 #roomName {
-  height: 10%;
+  
   width: 100%;
   font-size: large;
   text-align: center;

@@ -6,25 +6,25 @@
     <link rel="stylesheet" href="/styles_user.css" />
   </head>
   <body>
-    <div id="roomName"></div>
-    <div id="contentConteiner">
-      <div id="videoConteiner">
-        <div id="remoteVideoContainer">
-          
+    <div id="allContent">
+      <div id="roomName"></div>
+      <div id="contentConteiner">
+        <div id="videoConteiner">
+          <div id="remoteVideoContainer">
             <img id="imgVideo" src="/v13_0021_resize.jpg" />
-          
+          </div>
+          <div id="localVideoContainer"></div>
         </div>
-        <div id="localVideoContainer"></div>
-      </div>
-      <div id="chatConteiner">
-        <div id="chatBox"></div>
-        <div id="messageInputContainer">
-          <input
-            type="text"
-            id="messageInput"
-            placeholder="Введите сообщение"
-          />
-          <button id="sendMessage">Отправить</button>
+        <div id="chatConteiner">
+          <div id="chatBox"></div>
+          <div id="messageInputContainer">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Введите сообщение"
+            />
+            <button id="sendMessage">Отправить</button>
+          </div>
         </div>
       </div>
     </div>
@@ -108,7 +108,7 @@
 
           remoteVideo.srcObject = event.streams[0];
           remoteVideo.hidden = false;
-          imgVideo.hidden =true;
+          imgVideo.hidden = true;
           remoteVideo.setAttribute("playsinline", "");
           remoteVideo.autoplay = true;
           remoteVideoContainer.appendChild(remoteVideo);
