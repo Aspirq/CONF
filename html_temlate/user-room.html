@@ -2,21 +2,31 @@
 <html>
   <head>
     <meta charset="UTF-8" />
+    <!-- Заголовок страницы -->
     <title>Комната ожидания</title>
+    <!-- Подключение внешнего CSS файла -->
     <link rel="stylesheet" href="/styles_user.css" />
   </head>
   <body>
     <div id="allContent">
+      <!-- Блок для отображения имени комнаты -->
       <div id="roomName"></div>
+      <!-- Контейнер для основного содержимого -->
       <div id="contentConteiner">
+        <!-- Контейнер для видео -->
         <div id="videoConteiner">
+          <!-- Контейнер для удаленного видео -->
           <div id="remoteVideoContainer">
             <img id="imgVideo" src="/v13_0021_resize.jpg" />
           </div>
+          <!-- Контейнер для локального видео -->
           <div id="localVideoContainer"></div>
         </div>
+        <!-- Контейнер для чата -->
         <div id="chatConteiner">
+          <!-- Область отображения сообщений чата -->
           <div id="chatBox"></div>
+          <!-- Область ввода сообщений чата -->
           <div id="messageInputContainer">
             <input
               type="text"
@@ -29,8 +39,10 @@
       </div>
     </div>
 
+    <!-- Подключение библиотеки Socket.IO -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      // Конфигурация для WebRTC
       const configuration = {
         iceServers: [
           {
@@ -45,6 +57,7 @@
       // Подключение к серверу Socket.IO
       const socket = io();
 
+      // Объявление переменных для потоков и соединения
       let localStream;
       let peerConnection;
 
@@ -52,14 +65,11 @@
       const localVideoContainer = document.getElementById(
         "localVideoContainer"
       );
-
       const imgVideo = document.getElementById("imgVideo");
       const remoteVideoContainer = document.getElementById(
         "remoteVideoContainer"
       );
       const remoteVideo = document.createElement("video");
-      const roomNme = document.createElement("p");
-      document.getElementById("roomName").appendChild(roomNme);
 
       // Запрос разрешения на использование видео и аудио
       navigator.mediaDevices
@@ -104,8 +114,6 @@
 
         // Обработка удаленного потока
         peerConnection.ontrack = (event) => {
-          //console.log(event);
-
           remoteVideo.srcObject = event.streams[0];
           remoteVideo.hidden = false;
           imgVideo.hidden = true;
@@ -117,7 +125,6 @@
         // Обработка кандидатов для установки соединения
         peerConnection.onicecandidate = (event) => {
           if (event.candidate) {
-            //console.log(event);
             socket.emit("iceCandidate", event.candidate);
           }
         };
@@ -184,10 +191,13 @@
           });
       });
 
+      // Обработчик события 'DisconnecUser', вызываемый при получении сообщения 'DisconnecUser' от сервера
       socket.on("DisconnecUser", () => {
+        // Скрытие видео от удаленного пользователя
         remoteVideo.hidden = true;
+
+        // Отображение изображения-заполнителя
         imgVideo.hidden = false;
-        console.log("disc");
       });
 
       // Обработка кандидатов для установки соединения
@@ -199,12 +209,23 @@
 
       socket.emit("GetName");
 
+      // Обработчик события 'SetName', вызываемый при получении сообщения 'SetName' от сервера
       socket.on("SetName", (data) => {
+        // Создание нового элемента 'p' для отображения имени комнаты
+        const roomNme = document.createElement("p");
+        // Очистка предыдущего содержимого элемента 'roomName'
+        document.getElementById("roomName").innerHTML = "";
+        // Добавление нового элемента 'p' в элемент 'roomName'
+        document.getElementById("roomName").appendChild(roomNme);
+        // Создание текстового узла с полным именем слушателя из полученных данных
         var node = document.createTextNode(data.listenerFullName);
+        // Добавление текстового узла в элемент 'p', чтобы отобразить имя в интерфейсе
         roomNme.appendChild(node);
       });
 
+      // Обработчик события 'callRoomReload', вызываемый при получении сообщения 'callRoomReload' от сервера
       socket.on("callRoomReload", () => {
+        // Перенаправление браузера на корневой URL
         window.location.href = `/`;
       });
 
@@ -218,6 +239,7 @@
         }, 1000); // задержка в 1 секунду перед обновлением страницы
       });
 
+      // Обработка кнопки отправки сообщения
       const sendMessageButton = document.getElementById("sendMessage");
       const messageInput = document.getElementById("messageInput");
       const chatBox = document.getElementById("chatBox");

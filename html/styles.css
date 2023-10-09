@@ -18,7 +18,6 @@ form {
 label {
   display: block;
   margin-bottom: 10px;
-  
 }
 
 input[type="text"] {
@@ -48,15 +47,13 @@ button:hover {
 }
 
 #videoConteiner {
-  
   width: 100%; /* Добавьте ширину контейнера для корректного позиционирования */
   height: 99%; /* Удалите фиксированную высоту для адаптивности */
-  
+
   display: flex; /* Добавьте flex-контейнер для выравнивания по центру */
   justify-content: center; /* Выравнивание по горизонтали */
   align-items: center; /* Выравнивание по вертикали */
   position: relative; /* Позиционируем видео относительно контейнера "contentConteiner" */
-  
 }
 
 #allContent {
@@ -79,7 +76,7 @@ button:hover {
   position: absolute;
   bottom: 50px;
   right: 50px;
-  max-width: 250px; 
+  max-width: 250px;
   width: 25%;
   height: auto;
   border: 2px solid white;
@@ -87,23 +84,17 @@ button:hover {
 }
 
 #remoteVideoContainer {
-  
   height: 99%;
   align-items: center;
- 
-
-
 }
 
 #roomName {
-  
   width: 100%;
   font-size: large;
   text-align: center;
 }
 
-video{
- 
+video {
   width: 100%;
   height: 100%;
   padding: 0px;
