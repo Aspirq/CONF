@@ -27,9 +27,7 @@
       <div class="adminHeader">
         <h2>Административные опции</h2>
         <div class="button-group">
-          <button id="videoPageButton">
-            Открыть пустое окно для видео
-          </button>
+          <button id="videoPageButton">Открыть пустое окно для видео</button>
           <button id="videoExitButton">Выйти из всех комнат</button>
         </div>
       </div>
@@ -39,7 +37,9 @@
     <div id="chatContainer">
       <div id="chatBottom">
         <h2>Чат</h2>
-        <div id="chatBox"></div>
+        <div id="chatBox">
+          <div id="chatBoxInner"></div>
+        </div>
         <!-- Контейнер для сообщений чата -->
         <div id="messageInputContainer">
           <select id="userDropdown">
@@ -67,13 +67,48 @@
     const modalRenameButton = document.getElementById("modalRenameButton");
     const newRoomName = document.getElementById("newRoomName");
     const videoExitButton = document.getElementById("videoExitButton");
+    const messageInput = document.getElementById("messageInput");
+    const sendMessage = document.getElementById("sendMessage");
+    const userDropdown = document.getElementById("userDropdown"); // Получаем элемент выпадающего списка
+    const chatBox = document.getElementById("chatBoxInner");
+    let roomsLet = "";
 
     // Добавляем обработчик событий нажатия кнопок для newRoomName
     newRoomName.addEventListener("keyup", function (event) {
       //Проверяем нажатие Enter
       if (event.key === "Enter") {
         // Если клавиша Enter была нажата, нажимаем кнопку "Переименовать"
+
         modalRenameButton.click();
+      }
+    });
+
+    sendMessage.addEventListener("click", () => {
+      socket.emit("chatSendMessage", userDropdown.value, messageInput.value);
+      messageInput.value = "";
+    });
+
+    socket.on("chatInputMessage", (msg_from, msg_to, msg_text) => {
+      const addChatItem = document.createElement("div");
+      let to_text = "Всем";
+      let from_text = "Админ";
+      if (msg_to == "Admin") {
+        to_text = "Админ";
+      } else if (msg_to != "all") {
+        to_text = roomsLet[msg_to].listenerFullName;
+      }
+      if (msg_from != "Admin") {
+        from_text = roomsLet[msg_from].listenerFullName;
+      }
+      addChatItem.textContent = from_text + " > " + to_text + ": " + msg_text;
+      chatBox.appendChild(addChatItem);
+    });
+
+    messageInput.addEventListener("keyup", function (event) {
+      //Проверяем нажатие Enter
+      if (event.key === "Enter") {
+        // Если клавиша Enter была нажата, нажимаем кнопку "Отправить"
+        sendMessage.click();
       }
     });
 
@@ -105,14 +140,12 @@
     }
 
     socket.on("disconnect", () => {
-        console.warn(
-          "Соединение с сервером потеряно. Страница будет обновлена."
-        );        
-        
-        setTimeout(() => {
-          location.reload();
-        }, 1000); // задержка в 1 секунду перед обновлением страницы
-      });
+      console.warn("Соединение с сервером потеряно. Страница будет обновлена.");
+
+      setTimeout(() => {
+        location.reload();
+      }, 1000); // задержка в 1 секунду перед обновлением страницы
+    });
 
     // Функция для создания кнопки "Удалить"
     function createDeleteButton(roomId) {
@@ -192,8 +225,9 @@
     // Обработчик события получения списка комнат с сервера
     socket.on("SetRooms", (rooms) => {
       const roomsDiv = document.getElementById("rooms");
-      const userDropdown = document.getElementById("userDropdown"); // Получаем элемент выпадающего списка
       const chckUserDrop = userDropdown.value;
+
+      roomsLet = rooms;
 
       roomsDiv.innerHTML = ""; // Очищаем содержимое контейнера комнат
       userDropdown.innerHTML = ""; // Очистите текущий список пользователей
@@ -237,7 +271,7 @@
       .addEventListener("click", function () {
         window.open("/conversation-room/:admin", "_blank");
       });
-    
+
     //обработка события нажатия на конопку выхода из видео
     videoExitButton.addEventListener("click", function () {
       socket.emit("adminGotoRoom", "blanc");

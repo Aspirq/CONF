@@ -67,7 +67,7 @@ io.on("connection", (socket) => {
       waitingRooms[roomId].isConnected = false;
       setWaitingRoom(roomId, waitingRooms[roomId]);
       socket.to(roomId).emit("callRoomReload");
-    };
+    }
   });
 
   socket.on("sendRoomDelete", (roomId) => {
@@ -83,6 +83,23 @@ io.on("connection", (socket) => {
     const roomID = socket.request.session.roomId;
     console.log("GetName");
     socket.emit("SetName", waitingRooms[roomID]);
+  });
+
+  socket.on("chatSendMessage", (msg_to, msg_text) => {
+    const waitingRooms = getWaitingRooms();
+    const roomID = socket.request.session.roomId;
+    if (socket.request.session.isAdmin) {
+      if (msg_to == "all") {
+        io.emit("chatInputMessage", "Admin", "all", msg_text);
+        socket.emit("chatInputMessage", "Admin", "all", msg_text);
+      } else {
+        socket.to(msg_to).emit("chatInputMessage", "Admin", msg_to, msg_text);
+        socket.emit("chatInputMessage", "Admin", msg_to, msg_text);
+      }
+    } else {
+      socket.emit("chatInputMessage", roomID, msg_to, msg_text);
+      socket.to("admins").emit("chatInputMessage", roomID, msg_to, msg_text);
+    }
   });
 
   socket.on("RenameRoom", (roomId, newRoomName) => {

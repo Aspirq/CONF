@@ -6,13 +6,24 @@
     <title>Комната ожидания</title>
     <!-- Подключение внешнего CSS файла -->
     <link rel="stylesheet" href="/styles_user.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
   </head>
   <body>
+    <div id="renameModal" class="modal">
+      <div class="modal-content">
+        <!-- Выпадающий список для выбора камеры -->
+        <select id="videoSource"></select>
+        <!-- Выпадающий список для выбора микрофона -->
+        <select id="audioSource"></select>
+        <!-- Кнопка закрытия модального окна -->
+        <span class="close">&times;</span>
+      </div>
+    </div>
+
     <div id="allContent">
-      <!-- Выпадающий список для выбора камеры -->
-      <select id="videoSource"></select>
-      <!-- Выпадающий список для выбора микрофона -->
-      <select id="audioSource"></select>
       <!-- Блок для отображения имени комнаты -->
       <div id="roomName"></div>
       <!-- Контейнер для основного содержимого -->
@@ -73,6 +84,8 @@
       getMediaDevices();
 
       let stream = "";
+      const renameModal = document.getElementById("renameModal");
+      const closeSpan = document.getElementsByClassName("close")[0];
 
       async function getLocalStream() {
         const videoSource = document.getElementById("videoSource").value;
@@ -281,14 +294,23 @@
       socket.on("SetName", (data) => {
         // Создание нового элемента 'p' для отображения имени комнаты
         const roomNme = document.createElement("p");
+        const buttonCameraSetting = document.createElement("button");
+
         // Очистка предыдущего содержимого элемента 'roomName'
         document.getElementById("roomName").innerHTML = "";
         // Добавление нового элемента 'p' в элемент 'roomName'
         document.getElementById("roomName").appendChild(roomNme);
+        document.getElementById("roomName").appendChild(buttonCameraSetting);
         // Создание текстового узла с полным именем слушателя из полученных данных
         var node = document.createTextNode(data.listenerFullName);
         // Добавление текстового узла в элемент 'p', чтобы отобразить имя в интерфейсе
         roomNme.appendChild(node);
+        iconSetting = document.createElement("i");
+        iconSetting.setAttribute("class", "fas fa-camera");
+        buttonCameraSetting.appendChild(iconSetting);
+        buttonCameraSetting.addEventListener("click", () => {
+          renameModal.style.display = "block";
+        });
       });
 
       // Обработчик события 'callRoomReload', вызываемый при получении сообщения 'callRoomReload' от сервера
@@ -312,7 +334,7 @@
       const messageInput = document.getElementById("messageInput");
       const chatBox = document.getElementById("chatBox");
 
-      sendMessageButton.addEventListener("click", () => {
+      /*sendMessageButton.addEventListener("click", () => {
         const message = messageInput.value;
         if (message) {
           // Отправка сообщения на сервер или локальная обработка
@@ -328,7 +350,36 @@
           // Прокрутка чата вниз, чтобы видеть новые сообщения
           chatBox.scrollTop = chatBox.scrollHeight;
         }
+      }); */
+
+      sendMessageButton.addEventListener("click", () => {
+        const message = messageInput.value;
+        // Очистка поля ввода
+        messageInput.value = "";
+        socket.emit("chatSendMessage", "Admin", message);
       });
+
+      socket.on("chatInputMessage", (msg_from, msg_to, msg_text) => {
+        const addChatItem = document.createElement("div");
+        if (msg_from == "Admin") {
+          me_text = "Админ";
+        } else {
+          me_text = "Я";
+        };
+        addChatItem.textContent = me_text + ": " + msg_text;
+        chatBox.appendChild(addChatItem);
+      });
+
+      // Обработчики событий для закрытия модального окна и переименования комнаты
+      closeSpan.onclick = function () {
+        renameModal.style.display = "none"; // Закрыть модальное окно при клике на (x)
+      };
+
+      window.onclick = function (event) {
+        if (event.target == renameModal) {
+          renameModal.style.display = "none"; // Закрыть модальное окно при клике вне его области
+        }
+      };
     </script>
   </body>
 </html>
