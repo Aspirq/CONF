@@ -9,6 +9,10 @@
   </head>
   <body>
     <div id="allContent">
+      <!-- Выпадающий список для выбора камеры -->
+      <select id="videoSource"></select>
+      <!-- Выпадающий список для выбора микрофона -->
+      <select id="audioSource"></select>
       <!-- Блок для отображения имени комнаты -->
       <div id="roomName"></div>
       <!-- Контейнер для основного содержимого -->
@@ -42,6 +46,68 @@
     <!-- Подключение библиотеки Socket.IO -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      async function getMediaDevices() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoSelect = document.getElementById("videoSource");
+          const audioSelect = document.getElementById("audioSource");
+          videoSelect.innerHTML = "";
+          audioSelect.innerHTML = "";
+          devices.forEach((device) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            if (device.kind === "videoinput") {
+              option.text = device.label || `Камера ${videoSelect.length + 1}`;
+              videoSelect.appendChild(option);
+            } else if (device.kind === "audioinput") {
+              option.text =
+                device.label || `Микрофон ${audioSelect.length + 1}`;
+              audioSelect.appendChild(option);
+            }
+          });
+        } catch (error) {
+          console.error("Ошибка получения списка устройств:", error);
+        }
+      }
+
+      getMediaDevices();
+
+      let stream = "";
+
+      async function getLocalStream() {
+        const videoSource = document.getElementById("videoSource").value;
+        const audioSource = document.getElementById("audioSource").value;
+        const constraints = {
+          video: {
+            deviceId: videoSource ? { exact: videoSource } : undefined,
+            frameRate: { ideal: 6, max: 10, min: 2 },
+            width: { max: 640, ideal: 480 },
+          },
+          audio: {
+            deviceId: audioSource ? { exact: audioSource } : undefined,
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 512,
+          },
+        };
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
+          localVideo.srcObject = localStream;
+          socket.emit("localStreamAvailable");
+          // Дальше идет ваш код для работы с потоком
+        } catch (error) {
+          console.error("Ошибка получения потока:", error);
+        }
+        return stream;
+      }
+
+      document
+        .getElementById("videoSource")
+        .addEventListener("change", getLocalStream);
+      document
+        .getElementById("audioSource")
+        .addEventListener("change", getLocalStream);
+
       // Конфигурация для WebRTC
       const configuration = {
         iceServers: [
@@ -70,6 +136,7 @@
         "remoteVideoContainer"
       );
       const remoteVideo = document.createElement("video");
+      const localVideo = document.createElement("video");
 
       // Запрос разрешения на использование видео и аудио
       navigator.mediaDevices
@@ -85,10 +152,11 @@
             sampleRate: 512,
           },
         })
-        .then((stream) => {
+        .then((stream_new) => {
+          stream = stream_new;
           // Отображение локального видео
           localStream = stream;
-          const localVideo = document.createElement("video");
+
           localVideo.srcObject = localStream;
           localVideo.autoplay = true;
           localVideo.muted = true;
