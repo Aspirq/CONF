@@ -88,7 +88,7 @@
       messageInput.value = "";
     });
 
-    socket.on("chatInputMessage", (msg_from, msg_to, msg_text) => {
+    socket.on("chatInputMessage", (msgTime, msg_from, msg_to, msg_text) => {
       const addChatItem = document.createElement("div");
       let to_text = "Всем";
       let from_text = "Админ";

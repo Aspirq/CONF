@@ -1,53 +1,63 @@
+// Подключение модулей
 const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
 const path = require("path");
 const session = require("express-session");
+const genuuid = require("uuid");
+const { connected } = require("process");
+const routeHandlers = require("./routeHandlers");
 
+const db = require("./admin_db");
+const { 
+  getWaitingRooms, 
+  setWaitingRoom, 
+  removeWaitingRoom 
+} = require("./waitingRoomData.js");
+
+// Настройка экземпляров express, http и socket.io
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-const db = require("./admin_db");
 
-db.checkUser("ana", "1234")
-  .then((match) => {
-    console.log(match ? "User verified" : "Verification failed");
-  })
-  .catch((error) => {
-    console.error("An error occurred:", error);
-  });
-
-var genuuid = require("uuid");
-const { connected } = require("process");
-
-const { getWaitingRooms } = require("./waitingRoomData.js");
-const { setWaitingRoom } = require("./waitingRoomData.js");
-const { removeWaitingRoom } = require("./waitingRoomData.js");
-
-// Массив для хранения комнат ожидания
-//const waitingRooms = {};
-const urlencodedParser = express.urlencoded({ extended: false });
-
-const routeHandlers = require("./routeHandlers");
-
-// Разрешить обслуживание статических файлов из папки 'html'
+// Настройка директории для статических файлов
 app.use(express.static(path.join(__dirname, "html")));
 
-sessMidl = session({
+// Настройка и использование сессий
+const sessMidl = session({
   name: "SessionCookie",
   secret: "Shsh!Secret!",
   resave: false,
   saveUninitialized: true,
 });
-
 app.use(sessMidl);
-io.engine.use(sessMidl);
+io.engine.use(sessMidl); // Применение сессии к socket.io
 
+// Определение маршрутов
 app.get("/", routeHandlers.homeRouteHandler);
 app.get("/conversation-room/:roomId", routeHandlers.conversationRoomHandler);
 app.get("/user-room/:roomId", routeHandlers.userRoomHandler);
 app.get("/admin", routeHandlers.adminPageHandler);
 
+// Функции для работы с комнатами
+function generateRoomId() {
+  return genuuid.v4(); // Генерация уникального идентификатора для комнаты
+}
+
+function createWaitingRoom(fullName) {
+  const roomId = generateRoomId();
+  New_waitingRoom = {
+    listenerFullName: fullName,
+    offer: null,
+    socketIds: null,
+    SecondCaller: null,
+    boss: false,
+    isConnected: false,
+  };
+  // Сохранение информации о комнате
+  setWaitingRoom(roomId, New_waitingRoom);
+  return roomId;
+}
 // Обработка представления пользователя
 io.on("connection", (socket) => {
   socket.on("GetRooms", (data) => {
@@ -88,17 +98,17 @@ io.on("connection", (socket) => {
   socket.on("chatSendMessage", (msg_to, msg_text) => {
     const waitingRooms = getWaitingRooms();
     const roomID = socket.request.session.roomId;
+    const msgTime = new Date(Date.now());
     if (socket.request.session.isAdmin) {
       if (msg_to == "all") {
-        io.emit("chatInputMessage", "Admin", "all", msg_text);
-        socket.emit("chatInputMessage", "Admin", "all", msg_text);
+        io.emit("chatInputMessage", msgTime, "Admin", "all", msg_text);
       } else {
-        socket.to(msg_to).emit("chatInputMessage", "Admin", msg_to, msg_text);
-        socket.emit("chatInputMessage", "Admin", msg_to, msg_text);
+        socket.to(msg_to).emit("chatInputMessage", msgTime, "Admin", msg_to, msg_text);
+        socket.emit("chatInputMessage", msgTime, "Admin",  msg_to, msg_text);
       }
     } else {
-      socket.emit("chatInputMessage", roomID, msg_to, msg_text);
-      socket.to("admins").emit("chatInputMessage", roomID, msg_to, msg_text);
+      socket.emit("chatInputMessage",msgTime, roomID, msg_to, msg_text);
+      socket.to("admins").emit("chatInputMessage",msgTime, roomID, msg_to, msg_text);
     }
   });
 
@@ -206,24 +216,3 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
   console.log(`Сервер запущен на порту ${port}`);
 });
-
-// Генерация уникального идентификатора комнаты
-function generateRoomId() {
-  // return Math.random().toString(36).substring(2, 8);
-  return genuuid.v4();
-}
-
-// Создание комнаты ожидания для пользователя
-function createWaitingRoom(fullName) {
-  const roomId = generateRoomId();
-  New_waitingRoom = {
-    listenerFullName: fullName,
-    offer: null,
-    socketIds: null,
-    SecondCaller: null,
-    boss: false,
-    isConnected: false,
-  };
-  setWaitingRoom(roomId, New_waitingRoom);
-  return roomId;
-}
