@@ -15,6 +15,7 @@ const {
   setWaitingRoom,
   removeWaitingRoom,
 } = require("./waitingRoomData.js");
+db.deleteAllChatMessages();
 
 // Настройка экземпляров express, http и socket.io
 const app = express();

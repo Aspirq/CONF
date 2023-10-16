@@ -88,7 +88,7 @@
       messageInput.value = "";
     });
 
-    socket.on("chatInputMessage", (msgTime, msg_from, msg_to, msg_text) => {
+    function chatMsgDraw(msgTime, msg_from, msg_to, msg_text) {
       const addChatItem = document.createElement("div");
       let to_text = "Всем";
       let from_text = "Админ";
@@ -102,6 +102,23 @@
       }
       addChatItem.textContent = from_text + " > " + to_text + ": " + msg_text;
       chatBox.appendChild(addChatItem);
+    }
+
+    socket.on("chatInputMessage", (msgTime, msg_from, msg_to, msg_text) => {
+      chatMsgDraw(msgTime, msg_from, msg_to, msg_text);
+    });
+
+    socket.on("sendFullChat", (chatMessages) => {
+      chatBox.innerHTML = "";
+      for (const chatMessageId in chatMessages) {
+        const chatMessage = chatMessages[chatMessageId];
+        chatMsgDraw(
+          chatMessage.timestamp,
+          chatMessage.sender,
+          chatMessage.recipient,
+          chatMessage.message_text
+        );
+      }
     });
 
     messageInput.addEventListener("keyup", function (event) {
@@ -152,7 +169,14 @@
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "Удалить";
       deleteButton.addEventListener("click", () => {
-        socket.emit("sendRoomDelete", roomId);
+        if (
+          confirm(
+            "Подтвердите удаление комнаты.\nКомната будет удалена безвозвратно вместе со связанными с ней сообщениями чата."
+          )
+        ) {
+          socket.emit("sendRoomDelete", roomId);
+          socket.emit("getFullChat"); //Запрос всех сообщений чата
+        }
       });
       return deleteButton;
     }
@@ -205,16 +229,16 @@
       return roomItem;
     }
 
-    // Функция для создания элемента опции
+    // Функция для создания элемента выпадающего списка
     function createUserOption(roomId, room, chckUserDrop) {
       const userOption = document.createElement("option");
-      userOption.value = roomId; // Используем roomId как значение опции
+      userOption.value = roomId; // Используем roomId как значение элементп
       if (roomId == "all") {
         roomNme = "Всем";
       } else {
         roomNme = room.listenerFullName;
       }
-      userOption.textContent = roomNme; // Используем имя пользователя как текст опции
+      userOption.textContent = roomNme; // Используем имя пользователя как текст элемента
 
       if (chckUserDrop == roomId) {
         userOption.selected = true;
@@ -231,14 +255,14 @@
 
       roomsDiv.innerHTML = ""; // Очищаем содержимое контейнера комнат
       userDropdown.innerHTML = ""; // Очистите текущий список пользователей
-      userDropdown.appendChild(createUserOption("all", "Всем", chckUserDrop)); // Добавьте опцию "Всем" в выпадающий список
+      userDropdown.appendChild(createUserOption("all", "Всем", chckUserDrop)); // Добавьте элемент "Всем" в выпадающий список
 
       for (const roomId in rooms) {
         const room = rooms[roomId];
 
         // Заполнение списка пользователей
         const userOption = createUserOption(roomId, room, chckUserDrop);
-        userDropdown.appendChild(userOption); // Добавьте опцию в выпадающий список
+        userDropdown.appendChild(userOption); // Добавьте элемент в выпадающий список
 
         // Создание элемента комнаты и добавление его в контейнер комнат
         const roomItem = createRoomItem(roomId, room);
@@ -276,5 +300,7 @@
     videoExitButton.addEventListener("click", function () {
       socket.emit("adminGotoRoom", "blanc");
     });
+
+    socket.emit("getFullChat"); //Запрос всех сообщений чата
   </script>
 </html>

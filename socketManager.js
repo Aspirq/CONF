@@ -85,6 +85,7 @@ module.exports = function (io) {
           // ...уведомляем всех участников комнаты и обновляем список комнат.
           socket.to(roomId).emit("callRoomReload", roomId);
           socket.emit("SetRooms", getWaitingRooms());
+          db.deleteChatMessages(roomId);
         }
       }
     });
@@ -106,6 +107,16 @@ module.exports = function (io) {
       socket.emit("SetName", waitingRooms[roomID]);
     });
 
+    //Запрос обновления комнаты
+    socket.on("sendRoomReload", (roomId) => {
+      if (socket.request.session.isAdmin) {
+        const waitingRooms = getWaitingRooms();
+        waitingRooms[roomId].isConnected = false;
+        setWaitingRoom(roomId, waitingRooms[roomId]);
+        socket.to(roomId).emit("callRoomReload");
+      }
+    });
+
     // ----------------------------------------------
     // Обмен сообщениями в чате
     // ----------------------------------------------
@@ -122,12 +133,15 @@ module.exports = function (io) {
         if (msg_to == "all") {
           // ...разослать его всем участникам.
           io.emit("chatInputMessage", msgTime, "Admin", "all", msg_text);
+          db.addChatMessage(msgTime, "Admin", "all", msg_text);
         } else {
           // Иначе отправить сообщение конкретному пользователю.
           socket
             .to(msg_to)
             .emit("chatInputMessage", msgTime, "Admin", msg_to, msg_text);
+
           socket.emit("chatInputMessage", msgTime, "Admin", msg_to, msg_text);
+          db.addChatMessage(msgTime, "Admin", msg_to, msg_text);
         }
       } else {
         // Пользовательские сообщения также пересылаются администраторам.
@@ -135,6 +149,20 @@ module.exports = function (io) {
         socket
           .to("admins")
           .emit("chatInputMessage", msgTime, roomID, msg_to, msg_text);
+        db.addChatMessage(msgTime, roomID, msg_to, msg_text);
+      }
+    });
+
+    socket.on("getFullChat", () => {
+      if (!socket.request.session.isAdmin) {
+        const roomID = socket.request.session.roomId;
+        db.readChatMessages(roomID).then((chatMessages) => {
+          socket.emit("sendFullChat", chatMessages);
+        });
+      } else {
+        db.readChatMessages("Admin").then((chatMessages) => {
+          socket.emit("sendFullChat", chatMessages);
+        });
       }
     });
 

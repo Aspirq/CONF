@@ -359,15 +359,34 @@
         socket.emit("chatSendMessage", "Admin", message);
       });
 
-      socket.on("chatInputMessage", (msgTime, msg_from, msg_to, msg_text) => {
+      // Функции добавления записи в чат
+      function chatMsgDraw(msgTime, msg_from, msg_to, msg_text) {
         const addChatItem = document.createElement("div");
         if (msg_from == "Admin") {
           me_text = "Админ";
         } else {
           me_text = "Я";
-        };
+        }
         addChatItem.textContent = me_text + ": " + msg_text;
         chatBox.appendChild(addChatItem);
+      }
+      //Обработка входящих сообщений чата
+      socket.on("chatInputMessage", (msgTime, msg_from, msg_to, msg_text) => {
+        chatMsgDraw(msgTime, msg_from, msg_to, msg_text);
+      });
+
+      //Обработка всех сообщений чата
+      socket.on("sendFullChat", (chatMessages) => {
+        chatBox.innerHTML = "";
+        for (const chatMessageId in chatMessages) {
+          const chatMessage = chatMessages[chatMessageId];
+          chatMsgDraw(
+            chatMessage.timestamp,
+            chatMessage.sender,
+            chatMessage.recipient,
+            chatMessage.message_text
+          );
+        }
       });
 
       // Обработчики событий для закрытия модального окна и переименования комнаты
@@ -380,6 +399,8 @@
           renameModal.style.display = "none"; // Закрыть модальное окно при клике вне его области
         }
       };
+
+      socket.emit("getFullChat"); //Запрос всех сообщений чата
     </script>
   </body>
 </html>
