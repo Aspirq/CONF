@@ -11,14 +11,32 @@
   <body>
     <!-- Модальное окно для переименования комнаты -->
     <div id="renameModal" class="modal">
+      <div class="modal-head">
+        <p>Изменение ФИО</p>
+        <!-- Кнопка закрытия модального окна -->
+        <span class="close">&times;</span>
+      </div>
       <div class="modal-content">
         <input type="text" id="newRoomName" placeholder="Новое имя комнаты" />
         <!-- Поле ввода для нового имени комнаты -->
         <button id="modalRenameButton">Переименовать</button>
         <!-- Кнопка для отправки нового имени комнаты -->
-
-        <span class="close">&times;</span>
+      </div>
+    </div>
+    <!-- Модальное окно для выбора источника -->
+    <div id="SourceModal" class="modal">
+      <div class="modal-head">
+        <p id="sourceModalName">Выбор источников для:</p>
         <!-- Кнопка закрытия модального окна -->
+        <span class="close">&times;</span>
+      </div>
+
+      <div class="modal-content">
+        <!-- Выпадающий список для выбора камеры -->
+        <select id="videoSource"></select>
+        <!-- Выпадающий список для выбора микрофона -->
+        <select id="audioSource"></select>
+        <button id="modalSourceButton">Применить</button>
       </div>
     </div>
 
@@ -63,7 +81,10 @@
 
     // Элементы DOM для работы с модальным окном
     const renameModal = document.getElementById("renameModal");
-    const closeSpan = document.getElementsByClassName("close")[0];
+    const modalSourceButton = document.getElementById("modalSourceButton");
+    const SourceModal = document.getElementById("SourceModal");
+    const closeSpans = document.getElementsByClassName("close");
+    const allModal = document.getElementsByClassName("modal");
     const modalRenameButton = document.getElementById("modalRenameButton");
     const newRoomName = document.getElementById("newRoomName");
     const videoExitButton = document.getElementById("videoExitButton");
@@ -71,6 +92,9 @@
     const sendMessage = document.getElementById("sendMessage");
     const userDropdown = document.getElementById("userDropdown"); // Получаем элемент выпадающего списка
     const chatBox = document.getElementById("chatBoxInner");
+    const sourceModalName = document.getElementById("sourceModalName");
+    const videoSelect = document.getElementById("videoSource");
+    const audioSelect = document.getElementById("audioSource");
     let roomsLet = "";
 
     // Добавляем обработчик событий нажатия кнопок для newRoomName
@@ -192,6 +216,55 @@
       return GoToButton;
     }
 
+    //Функция для создания кнопки "Источники"
+    function createChangeSourceButton(roomID) {
+      const ChangeSourceButton = document.createElement("button");
+      ChangeSourceButton.textContent = "Выбор источников";
+      ChangeSourceButton.addEventListener("click", () => {
+        sourceModalName.innerHTML = '';
+        videoSelect.innerHTML = '';
+        audioSelect.innerHTML = '';
+        sourceModalName.textContent = "Выбор источников для канала (" + roomsLet[roomID].listenerFullName + ")";
+        socket.emit("getMediaSources", roomID);
+        modalSourceButton.dataset.roomId = roomID;
+        modalSourceButton.disabled = true;
+        // Логика выбора источника
+        SourceModal.style.display = "block";
+      });
+      return ChangeSourceButton;
+    }
+
+    socket.on("answerMediaSorceList", (devices, selectedVideo, selectedAudio) => {
+      try {
+          const videoSelect = document.getElementById("videoSource");
+          const audioSelect = document.getElementById("audioSource");
+          videoSelect.innerHTML = "";
+          audioSelect.innerHTML = "";
+          devices.forEach((device) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            if (device.kind === "videoinput") {
+              if (option.value == selectedVideo) option.selected = true;
+              option.text = device.label || `Камера ${videoSelect.length + 1}`;
+              videoSelect.appendChild(option);
+            } else if (device.kind === "audioinput") {
+              if (option.value == selectedAudio) option.selected = true;
+              option.text =
+                device.label || `Микрофон ${audioSelect.length + 1}`;
+              audioSelect.appendChild(option);
+            }
+          });
+          modalSourceButton.disabled = false;
+          console.log(
+            "Список устройств загружен",
+            videoSelect.value,
+            audioSelect.value
+          );
+        } catch (error) {
+          console.error("Ошибка получения списка устройств:", error);
+        }
+    });
+
     // Функция для создания элемента комнаты
     function createRoomItem(roomId, room) {
       // Создание контейнера для комнаты
@@ -220,6 +293,7 @@
       buttonGroup.appendChild(
         createRenameButton(roomId, room.listenerFullName)
       );
+      buttonGroup.appendChild(createChangeSourceButton(roomId));
       buttonGroup.appendChild(createReloadButton(roomId));
       buttonGroup.appendChild(createDeleteButton(roomId));
 
@@ -271,15 +345,26 @@
     });
 
     // Обработчики событий для закрытия модального окна и переименования комнаты
-    closeSpan.onclick = function () {
-      renameModal.style.display = "none"; // Закрыть модальное окно при клике на (x)
-    };
+    for (closeSpanID in closeSpans) {
+      const id = closeSpanID;
+      closeSpans[id].onclick = function () {
+        allModal[id].style.display = "none"; // Закрыть модальное окно при клике на (x)
+      };
+    }
 
     window.onclick = function (event) {
-      if (event.target == renameModal) {
-        renameModal.style.display = "none"; // Закрыть модальное окно при клике вне его области
-      }
+      for (id in allModal)
+        if (event.target == allModal[id]) {
+          allModal[id].style.display = "none"; // Закрыть модальное окно при клике вне его области
+        }
     };
+
+    modalSourceButton.addEventListener("click", changeSourceSend);
+    function changeSourceSend () {
+      const roomId = this.dataset.roomId; // Получение ID комнаты из атрибута data
+      socket.emit("setMediaSorce", roomId, videoSelect.value, audioSelect.value);
+      SourceModal.style.display = "none";
+    }
 
     modalRenameButton.addEventListener("click", renameRoom);
     function renameRoom() {

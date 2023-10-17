@@ -213,6 +213,19 @@ module.exports = function (io) {
       socket.to(roomID).emit("iceCandidate", event);
     });
 
+    //Пересылка запроса доступных источников
+   socket.on("getMediaSources", (roomID) => {
+        socket.to(roomID).emit("getMediaSources");
+    });
+    //Пересылка ответа о доступных источниках
+   socket.on("answerMediaSorceList", (devices, selectedVideo, selectedAudio) => {
+        socket.to("admins").emit("answerMediaSorceList", devices, selectedVideo, selectedAudio);
+    });
+    //Пересылка запроса на изменение источника
+    socket.on("setMediaSorce", (roomID, newVideoSorce, newAudioSorce)=> {
+        socket.to(roomID).emit("setMediaSorce", newVideoSorce, newAudioSorce);
+    });
+
     // ----------------------------------------------
     // Обработка событий подключения и отключения
     // ----------------------------------------------

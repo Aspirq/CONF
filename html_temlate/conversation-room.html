@@ -6,11 +6,21 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div id="renameModal" class="modal">
+      <div class="modal-content">
+        <!-- Выпадающий список для выбора камеры -->
+        <select id="videoSource"></select>
+        <!-- Выпадающий список для выбора микрофона -->
+        <select id="audioSource"></select>
+        <!-- Кнопка закрытия модального окна -->
+        <span class="close">&times;</span>
+      </div>
+    </div>
+
     <div id="allContent">
       <div id="roomName">
         <p id="roomNme">Ожидание соискателя</p>
       </div>
-      
 
       <div id="videoConteiner">
         <div id="remoteVideoContainer">
@@ -34,10 +44,11 @@
       // Подключение к серверу Socket.IO
       const socket = io();
 
+      const renameModal = document.getElementById("renameModal");
+      const closeSpan = document.getElementsByClassName("close")[0];
+
       let localStream;
       let peerConnection;
-
-      
 
       // Получение контейнеров для видео
       const localVideoContainer = document.getElementById(
@@ -46,14 +57,105 @@
       const remoteVideoContainer = document.getElementById(
         "remoteVideoContainer"
       );
+      let stream = "";
       const remoteVideo = document.createElement("video");
+      const localVideo = document.createElement("video");
       //const roomNme = document.createElement("p");
       roomNme = document.getElementById("roomNme");
       const imgVideo = document.getElementById("imgVideo");
       //document.getElementById("roomName").appendChild(roomNme);
 
+      const selectedVideo = localStorage.getItem("videoSource");
+      const selectedAudio = localStorage.getItem("audioSource");
+      let devices;
+
+      async function getMediaDevices() {
+        try {
+          console.log("start");
+          devices = await navigator.mediaDevices.enumerateDevices();
+          const videoSelect = document.getElementById("videoSource");
+          const audioSelect = document.getElementById("audioSource");
+          videoSelect.innerHTML = "";
+          audioSelect.innerHTML = "";
+          devices.forEach((device) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            if (device.kind === "videoinput") {
+              if (option.value == selectedVideo) option.selected = true;
+              option.text = device.label || `Камера ${videoSelect.length + 1}`;
+              videoSelect.appendChild(option);
+            } else if (device.kind === "audioinput") {
+              if (option.value == selectedAudio) option.selected = true;
+              option.text =
+                device.label || `Микрофон ${audioSelect.length + 1}`;
+              audioSelect.appendChild(option);
+            }
+          });
+          console.log(
+            "Список устройств загружен",
+            videoSelect.value,
+            audioSelect.value
+          );
+        } catch (error) {
+          console.error("Ошибка получения списка устройств:", error);
+        }
+      }
+
+      async function getLocalStream() {
+        
+        
+        const videoSource = document.getElementById("videoSource").value;
+        const audioSource = document.getElementById("audioSource").value;
+
+        localStorage.setItem("videoSource", videoSource);
+        localStorage.setItem("audioSource", audioSource);
+        console.log('videostart', videoSource, audioSource);
+        const constraints = {
+          video: {
+            deviceId: videoSource ? { exact: videoSource } : undefined,
+            frameRate: { ideal: 6, max: 10, min: 2 },
+            width: { max: 640, ideal: 480 },
+          },
+          audio: {
+            deviceId: audioSource ? { exact: audioSource } : undefined,
+            echoCancellation: true,
+            noiseSuppression: true, 
+            sampleRate: 512,
+          },
+        };
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
+          localVideo.srcObject = localStream;
+          localVideo.autoplay = true;
+          localVideo.muted = true;
+          localVideo.setAttribute("playsinline", "");
+
+          socket.emit("localStreamAvailable");
+          
+          // Дальше идет ваш код для работы с потоком
+        } catch (error) {
+          console.error("Ошибка получения потока:", error);
+        }
+        return stream;
+      }
+
+      document
+        .getElementById("videoSource")
+        .addEventListener("change", () => {
+          setTimeout(getLocalStream, 100);
+        });
+      document
+        .getElementById("audioSource")
+        .addEventListener("change", () => {
+          setTimeout(getLocalStream, 100);
+        });
+
+      getMediaDevices();
+      setTimeout(getLocalStream, 1000);
+      localVideoContainer.appendChild(localVideo);
+
       // Запрос разрешения на использование видео и аудио
-      navigator.mediaDevices
+     /* navigator.mediaDevices
         .getUserMedia({
           video: {
             width: { max: 640, ideal: 480 },
@@ -81,7 +183,9 @@
         })
         .catch((error) => {
           console.error("Ошибка получения доступа к видео и аудио:", error);
-        });
+        }); */
+
+
 
       // Подключение к удаленному потоку при его наличии
       socket.on("remoteStreamAvailable", () => {
@@ -177,7 +281,7 @@
           .then(() => {
             socket.emit("answer", peerConnection.localDescription);
           });
-          socket.emit("isAdmin");
+        socket.emit("isAdmin");
       });
 
       socket.on("DisconnecUser", () => {
@@ -197,10 +301,30 @@
       socket.emit("isAdmin");
 
       socket.on("SetName", (data) => {
-        var node = document.createTextNode(data.listenerFullName);
+        let node;
+        if (data) {
+          node = document.createTextNode(data.listenerFullName);
+        } else {
+          node = document.createTextNode("Пустая комната");
+        }
         roomNme.innerHTML = "";
         roomNme.appendChild(node);
       });
+
+      localVideoContainer.addEventListener("dblclick", () => {
+        renameModal.style.display = "block";
+      });
+
+      // Обработчики событий для закрытия модального окна и переименования комнаты
+      closeSpan.onclick = function () {
+        renameModal.style.display = "none"; // Закрыть модальное окно при клике на (x)
+      };
+
+      window.onclick = function (event) {
+        if (event.target == renameModal) {
+          renameModal.style.display = "none"; // Закрыть модальное окно при клике вне его области
+        }
+      };
     </script>
   </body>
 </html>

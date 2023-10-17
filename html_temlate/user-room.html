@@ -82,8 +82,6 @@
                 device.label || `Микрофон ${audioSelect.length + 1}`;
               audioSelect.appendChild(option);
             }
-            //videoSelect.value = selectedVideo;
-            //audioSelect.value = selectedAudio;
           });
           console.log(
             "Список устройств загружен",
@@ -402,6 +400,19 @@
             chatMessage.message_text
           );
         }
+      });
+
+      socket.on("getMediaSources", ()=> {
+        const videoSource = document.getElementById("videoSource").value;
+        const audioSource = document.getElementById("audioSource").value;
+        console.log(devices, videoSource, audioSource);
+        socket.emit("answerMediaSorceList", devices, videoSource, audioSource);
+      });
+
+      socket.on("setMediaSorce", (newVideoSorce, newAudioSorce)=> {
+        document.getElementById("videoSource").value = newVideoSorce;
+        document.getElementById("audioSource").value = newAudioSorce;
+        setTimeout(getLocalStream, 100);
       });
 
       // Обработчики событий для закрытия модального окна и переименования комнаты

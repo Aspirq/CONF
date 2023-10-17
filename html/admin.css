@@ -175,11 +175,37 @@ video {
 
 .modal-content {
   background-color: #fefefe;
-  margin: 5% auto;
+  margin: 0% 5% 0% 5%;
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
   display: flex;
+}
+
+.modal-head {
+  display: flex;
+    flex-direction: row;
+    margin: 0% 5% 0% 5%;
+    padding: 0px 20px 0px 20px;
+    width: 80%;
+    background-color: #007bff;
+    align-items: center;
+    border: 1px solid #888;
+}
+
+.modal-head p {
+  flex: 1;
+  margin: 10px;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+#videoSource {
+  flex: 1;
+}
+
+#audioSource {
+  flex: 1;
 }
 
 #newRoomName {
