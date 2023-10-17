@@ -2,12 +2,14 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Комната ожидания</title>
+    <title>Диалог с соискателем</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div id="allContent">
-      <div id="roomName"></div>
+      <div id="roomName">
+        <p id="roomNme">Ожидание соискателя</p>
+      </div>
       
 
       <div id="videoConteiner">
@@ -45,9 +47,10 @@
         "remoteVideoContainer"
       );
       const remoteVideo = document.createElement("video");
-      const roomNme = document.createElement("p");
+      //const roomNme = document.createElement("p");
+      roomNme = document.getElementById("roomNme");
       const imgVideo = document.getElementById("imgVideo");
-      document.getElementById("roomName").appendChild(roomNme);
+      //document.getElementById("roomName").appendChild(roomNme);
 
       // Запрос разрешения на использование видео и аудио
       navigator.mediaDevices
@@ -195,6 +198,7 @@
 
       socket.on("SetName", (data) => {
         var node = document.createTextNode(data.listenerFullName);
+        roomNme.innerHTML = "";
         roomNme.appendChild(node);
       });
     </script>

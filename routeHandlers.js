@@ -47,7 +47,7 @@ exports.conversationRoomHandler = (req, res) => {
   } else {
     req.session.roomId = roomId;
     // Отправка страницы комнаты ожидания
-    res.sendFile(path.join(__dirname, "html_temlate", "waiting-room.html"));
+    res.sendFile(path.join(__dirname, "html_temlate", "conversation-room.html"));
   }
 };
 

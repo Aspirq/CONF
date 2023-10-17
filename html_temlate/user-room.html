@@ -57,9 +57,14 @@
     <!-- Подключение библиотеки Socket.IO -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      const selectedVideo = localStorage.getItem("videoSource");
+      const selectedAudio = localStorage.getItem("audioSource");
+      let devices;
+
       async function getMediaDevices() {
         try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
+          console.log('start');
+          devices = await navigator.mediaDevices.enumerateDevices();
           const videoSelect = document.getElementById("videoSource");
           const audioSelect = document.getElementById("audioSource");
           videoSelect.innerHTML = "";
@@ -68,28 +73,43 @@
             const option = document.createElement("option");
             option.value = device.deviceId;
             if (device.kind === "videoinput") {
+              if (option.value == selectedVideo) option.selected = true;
               option.text = device.label || `Камера ${videoSelect.length + 1}`;
               videoSelect.appendChild(option);
             } else if (device.kind === "audioinput") {
+              if (option.value == selectedAudio) option.selected = true;
               option.text =
                 device.label || `Микрофон ${audioSelect.length + 1}`;
               audioSelect.appendChild(option);
             }
+            //videoSelect.value = selectedVideo;
+            //audioSelect.value = selectedAudio;
           });
+          console.log(
+            "Список устройств загружен",
+            videoSelect.value,
+            audioSelect.value
+          );
         } catch (error) {
           console.error("Ошибка получения списка устройств:", error);
         }
       }
 
-      getMediaDevices();
+      
 
       let stream = "";
       const renameModal = document.getElementById("renameModal");
       const closeSpan = document.getElementsByClassName("close")[0];
 
       async function getLocalStream() {
+        
+        
         const videoSource = document.getElementById("videoSource").value;
         const audioSource = document.getElementById("audioSource").value;
+
+        localStorage.setItem("videoSource", videoSource);
+        localStorage.setItem("audioSource", audioSource);
+        console.log('videostart', videoSource, audioSource);
         const constraints = {
           video: {
             deviceId: videoSource ? { exact: videoSource } : undefined,
@@ -99,14 +119,19 @@
           audio: {
             deviceId: audioSource ? { exact: audioSource } : undefined,
             echoCancellation: true,
-            noiseSuppression: true,
+            noiseSuppression: true, 
             sampleRate: 512,
           },
         };
         try {
           localStream = await navigator.mediaDevices.getUserMedia(constraints);
           localVideo.srcObject = localStream;
+          localVideo.autoplay = true;
+          localVideo.muted = true;
+          localVideo.setAttribute("playsinline", "");
+
           socket.emit("localStreamAvailable");
+          
           // Дальше идет ваш код для работы с потоком
         } catch (error) {
           console.error("Ошибка получения потока:", error);
@@ -116,10 +141,14 @@
 
       document
         .getElementById("videoSource")
-        .addEventListener("change", getLocalStream);
+        .addEventListener("change", () => {
+          setTimeout(getLocalStream, 100);
+        });
       document
         .getElementById("audioSource")
-        .addEventListener("change", getLocalStream);
+        .addEventListener("change", () => {
+          setTimeout(getLocalStream, 100);
+        });
 
       // Конфигурация для WebRTC
       const configuration = {
@@ -151,8 +180,12 @@
       const remoteVideo = document.createElement("video");
       const localVideo = document.createElement("video");
 
+      getMediaDevices();
+      setTimeout(getLocalStream, 1000);
+      localVideoContainer.appendChild(localVideo);
+
       // Запрос разрешения на использование видео и аудио
-      navigator.mediaDevices
+      /*navigator.mediaDevices
         .getUserMedia({
           video: {
             width: { max: 640, ideal: 480 },
@@ -181,7 +214,7 @@
         })
         .catch((error) => {
           console.error("Ошибка получения доступа к видео и аудио:", error);
-        });
+        });*/
 
       // Подключение к удаленному потоку при его наличии
       socket.on("remoteStreamAvailable", () => {
@@ -214,7 +247,6 @@
         peerConnection
           .createOffer()
           .then((offer) => {
-            console.log("1");
             return peerConnection.setLocalDescription(offer);
           })
           .then(() => {
@@ -334,24 +366,7 @@
       const messageInput = document.getElementById("messageInput");
       const chatBox = document.getElementById("chatBox");
 
-      /*sendMessageButton.addEventListener("click", () => {
-        const message = messageInput.value;
-        if (message) {
-          // Отправка сообщения на сервер или локальная обработка
-
-          // Создание элемента для отображения сообщения
-          const messageElement = document.createElement("div");
-          messageElement.textContent = message;
-          chatBox.appendChild(messageElement);
-
-          // Очистка поля ввода
-          messageInput.value = "";
-
-          // Прокрутка чата вниз, чтобы видеть новые сообщения
-          chatBox.scrollTop = chatBox.scrollHeight;
-        }
-      }); */
-
+      //Обработка события нажатия на кнопку отправки сообщения
       sendMessageButton.addEventListener("click", () => {
         const message = messageInput.value;
         // Очистка поля ввода
